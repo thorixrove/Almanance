@@ -8,7 +8,7 @@ interface UserStore {
 }
 
 export const useUserStore = create<UserStore>((set) => ({
-    currency: "INR",
+    currency: "IDR",
     setCurrency: (value) => set({ currency: value }),
     needsOnboarding: null,
     setNeedsOnboarding: (value) => set({ needsOnboarding: value }),

@@ -12,6 +12,25 @@ export const useUserSync = () => {
     useEffect(() => {
         if(!user) return
 
+        const ensureDefaultAccount = async () => {
+            const { data: existingAccount } = await authSupabase
+                .from("accounts")
+                .select("id")
+                .eq("user_id", user.id)
+                .eq("is_default", true)
+                .maybeSingle()
+
+            if (existingAccount) return
+
+            const { error: accountError } = await authSupabase
+                .from("accounts")
+                .insert({ user_id: user.id, name: "Cash", type: "CASH", balance: 0, is_default: true })
+
+            if (accountError) {
+                console.error("Error creating default account:", accountError)
+            }
+        }
+
         const syncUser = async () => {
             try {
                 const { data: existingUser, error: fetchError} = await authSupabase
@@ -27,8 +46,9 @@ export const useUserSync = () => {
                 }
 
                 if (existingUser) {
-                    setCurrency(existingUser.currency ?? "INR")
+                    setCurrency(existingUser.currency ?? "IDR")
                     setNeedsOnboarding(!existingUser.currency)
+                    await ensureDefaultAccount()
                     return
                 }
 
@@ -54,16 +74,10 @@ export const useUserSync = () => {
                     return
                 }
 
-                setCurrency(newUser?.currency ?? "INR")
+                setCurrency(newUser?.currency ?? "IDR")
                 setNeedsOnboarding(!newUser?.currency)
 
-                const { error: accountError} = await authSupabase
-                .from("accounts")
-                .insert({ user_id: user.id, name: "Cash", type: "CASH", balance: 0, is_default: true })
-
-                if (accountError) {
-                    console.error("Error creating default account:", accountError)
-                }
+                await ensureDefaultAccount()
                 } catch (e) {
                     console.error("Unexpected sync error", e)
                     setNeedsOnboarding(true)
