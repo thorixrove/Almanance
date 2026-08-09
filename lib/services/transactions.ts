@@ -46,7 +46,7 @@ export async function createTransaction(
 
     if (insertError) return { transactions, error: insertError}
 
-    const { data: account, error: fetchError } = await supabase
+    const { data: accounts, error: fetchError } = await supabase
     .from("accounts")
     .select("balance")
     .eq("id", payload.account_id)
@@ -58,7 +58,7 @@ export async function createTransaction(
 
   const { error: balanceError } = await supabase
     .from("accounts")
-    .update({ balance: account.balance + delta })
+    .update({ balance: accounts.balance + delta })
     .eq("id", payload.account_id);
 
   if (balanceError) return { transactions, error: balanceError };
