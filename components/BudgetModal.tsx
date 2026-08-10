@@ -3,7 +3,7 @@ import {Budget} from "@/lib/services/budgets"
 import { COLORS } from "@/constants/theme"
 import { FormSheetModal } from "./FormSheetModal"
 import { useEffect, useState } from "react"
-import { Text, TextInput, TouchableOpacity } from "react-native-gesture-handler"
+import { Text, TextInput, TouchableOpacity } from "react-native";
 
 
 export function BudgetModal({
@@ -29,7 +29,9 @@ export function BudgetModal({
   }, [visible, budget])
 
   const handleSave = async () => {
-    const parsedAmount = parseFloat(amount.replace(/,/g, ""))
+    // (pemisah ribuan), baru koma jadi titik desimal
+    const normalized = amount.replace(/\./g, "").replace(",", ".")
+    const parsedAmount = parseFloat(normalized)
 
     if(!parsedAmount || parsedAmount <= 0) {
       setError("Enter a valid monthly budget.")

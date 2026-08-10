@@ -4,7 +4,7 @@ import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery"
 import { useBudgetQuery } from "@/hooks/queries/useBudgetQuery"
 import { useTransactionsQuery } from "@/hooks/queries/useTransactionsQuery"
 import { Transaction } from "@/types"
-import { formatPrice } from "@/lib/utils/utils"
+import { formatPrice } from "@/lib/utils"
 import { useUserStore } from "@/store/useStore"
 import { useUser } from "@clerk/expo"
 import { Feather } from "@expo/vector-icons"
@@ -256,7 +256,7 @@ export default function HomeScreen() {
 
             {budgets ? (
               <>
-                              <Text className="text-brand-text-secondary text-xs mb-2">
+                <Text className="text-brand-text-secondary text-xs mb-2">
                   {formatPrice(monthExpense, currency)} of{" "}
                   {formatPrice(budgets.amount, currency)} spent
                 </Text>

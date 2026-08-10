@@ -3,7 +3,7 @@ import { useAuth, useUser } from '@clerk/expo'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 
-export default function profileScreen() {
+export default function ProfileScreen() {
   const {user} = useUser()
   const {signOut} = useAuth()
   const router = useRouter()

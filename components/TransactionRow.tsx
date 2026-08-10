@@ -1,7 +1,8 @@
 import { getCategoryConfig } from "@/constants/categories";
 import { Transaction } from "@/lib/services/transactions";
-import { formatPrice } from "@/lib/utils/utils";
+import { formatPrice } from "@/lib/utils";
 import { Feather } from "@expo/vector-icons";
+import { memo } from "react";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import { Text, TouchableOpacity, View } from "react-native";
 
@@ -15,12 +16,15 @@ keyof typeof Feather.glyphMap
     VOICE: "mic",
 }
 
-export function TransactionRow({
+function TransactionRowComponent({
     tx,
     onDelete,
 }: {
     tx: Transaction;
-    onDelete?: () => void
+    // now receives the transaction, so the parent can pass a single
+    // stable function reference instead of creating a new closure
+    // per row on every render.
+    onDelete?: (tx: Transaction) => void
 }) {
     const config = getCategoryConfig(tx.category)
     const isIncome = tx.type === "INCOME"
@@ -80,12 +84,12 @@ export function TransactionRow({
     }
 
     return (
-            <View className="mb-2.5">
+      <View className="mb-2.5">
       <Swipeable
         overshootRight={false}
         renderRightActions={() => (
           <TouchableOpacity
-            onPress={onDelete}
+            onPress={() => onDelete(tx)}
             className="bg-brand-coral rounded-2xl ml-2 w-16 items-center justify-center"
           >
             <Feather name="trash-2" size={18} color="#fff" />
@@ -97,3 +101,9 @@ export function TransactionRow({
     </View>
     )
 }
+
+// React.memo: skip re-rendering this row if `tx` and `onDelete` didn't
+// actually change reference. Combined with the stable onDelete from the
+// parent (see transactions.tsx), unrelated re-renders of the screen
+// (search typing, filter toggles, etc.) no longer re-render every row.
+export const TransactionRow = memo(TransactionRowComponent)
