@@ -8,7 +8,7 @@ export async function getAccounts(supabase: SupabaseClient, userId: string) {
     .select("*")
     .eq("user_id", userId)
     .order("is_default", { ascending: false})
-    .order("creates_at", { ascending: true})
+    .order("created_at", { ascending: true})
 
     if (error) throw error
     return data as Account[]

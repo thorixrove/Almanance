@@ -29,7 +29,12 @@ export function useCreateTransactions() {
 
         return useMutation({
             mutationFn: (tx: Pick<Transaction, "id" | "account_id" | "amount" | "type">) =>
-                deleteTransaction(supabase, tx.id, tx.account_id, tx.amount, tx.type as TransactionType),
+                deleteTransaction(supabase, 
+                    tx.id, 
+                    tx.account_id, 
+                    tx.amount, 
+                    tx.type as TransactionType
+                ),
             onSuccess: (result) => {
                 if (result.error) return
                 queryClient.invalidateQueries({ queryKey: ["transactions"]})

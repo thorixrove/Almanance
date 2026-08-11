@@ -73,6 +73,8 @@ export default function TransactionsScreen() {
     refetchAccounts()
   }
 
+
+
   const filterTransactions = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return transactions
@@ -82,6 +84,8 @@ export default function TransactionsScreen() {
       tx.category.toLowerCase().includes(q)
     )
   }, [transactions, search])
+
+
 
   const dailyIncomeExpense = useMemo(() => {
     const days = currentMonthDays()
@@ -317,6 +321,7 @@ export default function TransactionsScreen() {
                           </View>
                         </View>
                     </View>
+                    
                       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                         <BarChart
                           data={dailyIncomeExpense}
