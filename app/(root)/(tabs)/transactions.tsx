@@ -1,6 +1,6 @@
 import { TransactionRow } from "@/components/TransactionRow"
 import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery"
-import { useDeleteTransactions } from "@/hooks/mutation/useTransactionMutations"
+import { useDeleteTransactions, useDeleteTransactionsBulk } from "@/hooks/mutation/useTransactionMutations"
 import { Transaction, TransactionType } from "@/lib/services/transactions"
 import { exportTransactionsToCsv } from "@/lib/utils/exportTransactions"
 import { Feather } from "@expo/vector-icons"
@@ -46,6 +46,12 @@ export default function TransactionsScreen() {
   const [search, setSearch] = useState("")
   const [exporting, setExporting] = useState(false)
 
+  // Multi-select state: entered via long-press on a row or the header
+  // "Select" button. While active, tapping rows toggles selection instead
+  // of the normal swipe-to-delete / navigate behavior.
+  const [selectionMode, setSelectionMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
 
   const typeFilter: TransactionType | null =
   activeFilters === "Income"
@@ -63,6 +69,7 @@ export default function TransactionsScreen() {
   } = useTransactionsQuery({ type: typeFilter, accountId: activeAccountId})
   const { data: accounts = [], refetch: refetchAccounts} = useAccountsQuery()
   const { mutateAsync: removeTransactions} = useDeleteTransactions()
+  const { mutateAsync: removeTransactionsBulk, isPending: bulkDeleting } = useDeleteTransactionsBulk()
 
   const loading = transactionsLoading
   const refreshing = transactionsRefetching
@@ -73,8 +80,6 @@ export default function TransactionsScreen() {
     refetchAccounts()
   }
 
-
-
   const filterTransactions = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return transactions
@@ -84,8 +89,6 @@ export default function TransactionsScreen() {
       tx.category.toLowerCase().includes(q)
     )
   }, [transactions, search])
-
-
 
   const dailyIncomeExpense = useMemo(() => {
     const days = currentMonthDays()
@@ -149,12 +152,72 @@ export default function TransactionsScreen() {
     [removeTransactions]
   )
 
+  // Long-pressing any row (when not already selecting) enters selection
+  // mode and selects that row.
+  const handleLongPress = useCallback((tx: Transaction) => {
+    setSelectionMode(true)
+    setSelectedIds(new Set([tx.id]))
+  }, [])
+
+  const handleToggleSelect = useCallback((tx: Transaction) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(tx.id)) {
+        next.delete(tx.id)
+      } else {
+        next.add(tx.id)
+      }
+      return next
+    })
+  }, [])
+
+  const exitSelectionMode = useCallback(() => {
+    setSelectionMode(false)
+    setSelectedIds(new Set())
+  }, [])
+
+  const handleDeleteSelected = useCallback(() => {
+    const selected = transactions.filter((tx) => selectedIds.has(tx.id))
+    if (selected.length === 0) return
+
+    Alert.alert(
+      "Delete transactions",
+      `Delete ${selected.length} selected transaction${
+        selected.length > 1 ? "s" : ""
+      }? This can't be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            const { error: deleteError } = await removeTransactionsBulk(selected)
+            if (deleteError) {
+              Alert.alert("Error", "Couldn't delete the selected transactions.")
+              return
+            }
+            exitSelectionMode()
+          },
+        },
+      ]
+    )
+  }, [transactions, selectedIds, removeTransactionsBulk, exitSelectionMode])
+
   // Stable renderItem reference so FlatList doesn't treat every parent
-  // re-render (typing in search, toggling filters) as a reason to
-  // re-create and re-render every visible row.
+  // re-render (typing in search, toggling filters, selecting rows) as a
+  // reason to re-create and re-render every visible row.
   const renderItem: ListRenderItem<Transaction> = useCallback(
-    ({ item }) => <TransactionRow tx={item} onDelete={handelDelete} />,
-    [handelDelete]
+    ({ item }) => (
+      <TransactionRow
+        tx={item}
+        onDelete={selectionMode ? undefined : handelDelete}
+        onLongPress={selectionMode ? undefined : handleLongPress}
+        selectionMode={selectionMode}
+        selected={selectedIds.has(item.id)}
+        onToggleSelect={handleToggleSelect}
+      />
+    ),
+    [selectionMode, selectedIds, handelDelete, handleLongPress, handleToggleSelect]
   )
 
   return (
@@ -162,19 +225,56 @@ export default function TransactionsScreen() {
       <View className="px-5 pt-3 pb-2">
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-brand-bg text-xl font-semibold">
-            Transaction
+            {selectionMode ? `${selectedIds.size} selected` : "Transaction"}
           </Text>
-          <TouchableOpacity
-            onPress={handleExport}
-            disabled={exporting}
-            className="w-9 h-9 rounded-full bg-white border border-[#E8E6DF] items-center justify-center"
-          >
-            {exporting ? (
-              <ActivityIndicator size="small" color="#5C5F68" />
-            ) : (
-              <Feather name="download" size={15} color="#5C5F68" />
-            )}
-          </TouchableOpacity>
+
+          {selectionMode ? (
+            <View className="flex-row items-center gap-2">
+              <TouchableOpacity
+                onPress={handleDeleteSelected}
+                disabled={selectedIds.size === 0 || bulkDeleting}
+                className={`w-9 h-9 rounded-full items-center justify-center ${
+                  selectedIds.size === 0 ? "bg-white border border-[#E8E6DF]" : "bg-brand-coral"
+                }`}
+              >
+                {bulkDeleting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Feather
+                    name="trash-2"
+                    size={15}
+                    color={selectedIds.size === 0 ? "#8A8D96" : "#fff"}
+                  />
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={exitSelectionMode}
+                className="w-9 h-9 rounded-full bg-white border border-[#E8E6DF] items-center justify-center"
+              >
+                <Feather name="x" size={15} color="#5C5F68" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View className="flex-row items-center gap-2">
+              <TouchableOpacity
+                onPress={() => setSelectionMode(true)}
+                className="w-9 h-9 rounded-full bg-white border border-[#E8E6DF] items-center justify-center"
+              >
+                <Feather name="check-square" size={15} color="#5C5F68" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleExport}
+                disabled={exporting}
+                className="w-9 h-9 rounded-full bg-white border border-[#E8E6DF] items-center justify-center"
+              >
+                {exporting ? (
+                  <ActivityIndicator size="small" color="#5C5F68" />
+                ) : (
+                  <Feather name="download" size={15} color="#5C5F68" />
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         <View className="flex-row items-center gap-2 bg-white rounded-xl border border-[#E8E6DF] px-3.5 py-2.5 mb-2.5">
@@ -290,16 +390,18 @@ export default function TransactionsScreen() {
             paddingBottom: 100,
           }}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={loadData} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={loadData}
+              enabled={!selectionMode}
+            />
           }
-          // Perf tuning: render fewer off-screen items up front, and cap
-          // how many extra screens of content stay mounted while scrolling.
           initialNumToRender={12}
           maxToRenderPerBatch={12}
           windowSize={7}
           removeClippedSubviews
           ListHeaderComponent={
-            transactions.length > 0 ? (
+            transactions.length > 0 && !selectionMode ? (
               <View className="bg-white rounded-2xl border border-[#E8E6DF] p-4 mb-4">
                 <View className="flex-row justify-between items-center mb-3">
                   <Text className="text-brand-bg text-xs font-medium">
@@ -321,7 +423,6 @@ export default function TransactionsScreen() {
                           </View>
                         </View>
                     </View>
-                    
                       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                         <BarChart
                           data={dailyIncomeExpense}

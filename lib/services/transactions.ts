@@ -101,3 +101,47 @@ export async function deleteTransaction (
     
     return { error: null}
 }
+
+// Bulk delete: removes many transactions in one request and corrects the
+// balance of every affected account (selected transactions can belong to
+// different accounts, so deltas are grouped per account first).
+export async function deleteTransactions(
+    supabase: SupabaseClient,
+    transactions: Pick<Transaction, "id" | "account_id" | "amount" | "type">[]
+) {
+    if (transactions.length === 0) return { error: null }
+
+    const ids = transactions.map((tx) => tx.id)
+
+    const { error: deleteError } = await supabase
+        .from("transactions")
+        .delete()
+        .in("id", ids)
+
+    if (deleteError) return { error: deleteError }
+
+    const deltaByAccount = new Map<string, number>()
+    for (const tx of transactions) {
+        const delta = tx.type === "INCOME" ? -tx.amount : tx.amount
+        deltaByAccount.set(tx.account_id, (deltaByAccount.get(tx.account_id) ?? 0) + delta)
+    }
+
+    for (const [accountId, delta] of deltaByAccount) {
+        const { data: account, error: fetchError } = await supabase
+            .from("accounts")
+            .select("balance")
+            .eq("id", accountId)
+            .single()
+
+        if (fetchError) return { error: fetchError }
+
+        const { error: balanceError } = await supabase
+            .from("accounts")
+            .update({ balance: account.balance + delta })
+            .eq("id", accountId)
+
+        if (balanceError) return { error: balanceError }
+    }
+
+    return { error: null }
+}

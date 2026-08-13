@@ -27,12 +27,14 @@ import { Controller, useForm } from "react-hook-form";
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -42,6 +44,27 @@ const TYPE_OPTIONS = [
   { key: "EXPENSE" as const, label: "Expense"},
   { key: "INCOME" as const, label: "Income"},
 ]
+
+function useKeyboardHeight() {
+  const [height, setHeight] = useState(0)
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "android" ? "keyboardDidShow" : "keyboardWillShow"
+    const hideEvent = Platform.OS === "android" ? "keyboardDidHide" : "keyboardWillHide"
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      setHeight(e.endCoordinates.height)
+    })
+    const hideSub = Keyboard.addListener(hideEvent, () => setHeight(0))
+
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
+  }, [])
+
+  return height
+}
 
 const DEFAULT_VALUES = (accounts: Account[]): TransactionFormValues => ({
   type: "EXPENSE",
@@ -58,6 +81,7 @@ export default function AddTransaction() {
   const {user} = useUser()
   const router = useRouter()
   const params = useLocalSearchParams<{action?: string}>()
+  const keyboardHeight = useKeyboardHeight()
 
   const {
     data: accounts = [],
@@ -204,9 +228,10 @@ export default function AddTransaction() {
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="flex-1"
       >
+
         {loadingAccounts ? (
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator color="#4A9EFF" />
@@ -226,11 +251,12 @@ export default function AddTransaction() {
             </Text>
           </View>
         ): (
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <ScrollView
-            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
             contentContainerStyle={{
               paddingHorizontal: 20,
-              paddingBottom: 100,
+              paddingBottom: keyboardHeight > 0 ? keyboardHeight + 24 : 100,
             }}
           >
             {/* AI captute shorcuts */}
@@ -406,6 +432,7 @@ export default function AddTransaction() {
                 </Text>
               </TouchableOpacity>
           </ScrollView>
+          </TouchableWithoutFeedback>
         )}
       </KeyboardAvoidingView>
 
