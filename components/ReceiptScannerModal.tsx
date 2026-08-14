@@ -58,7 +58,7 @@ export function ReceiptScannerModal({
     }
 
     return(
-          <Modal visible={visible} animationType="slide">
+      <Modal visible={visible} animationType="slide">
       <View className="flex-1 bg-black">
         {permission?.granted && (
           <CameraView ref={cameraRef} style={{ flex: 1 }} facing="back" />
