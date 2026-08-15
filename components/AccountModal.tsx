@@ -49,6 +49,7 @@ export function AccountModal({
         }
     }, [visible, accounts])
 
+    
     const handleSave = async () => {
         if(!name.trim()) {
             setError('Please enter an accounnt name.')

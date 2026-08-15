@@ -94,9 +94,10 @@ export default function ProfileScreen() {
   } = useAccountsQuery()
   const { mutateAsync: setDefaultAccount } = useSetDefaultAccount()
 
+
+
   const handlePickAvatar = async () => {
     if (!user) return
-
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if(!permission.granted) {
       Alert.alert(
@@ -105,7 +106,6 @@ export default function ProfileScreen() {
       )
       return
     }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
@@ -114,7 +114,6 @@ export default function ProfileScreen() {
       base64: true,
     })
     if (result.canceled) return
-
     setUploadingAvatar(true)
     try {
       const asset = result.assets[0];
@@ -122,7 +121,6 @@ export default function ProfileScreen() {
       const match = /\.(\w+)$/.exec(filename);
       const mimeType = match ? `image/${match[1]}` : "image/jpeg";
       const dataUrl = `data:${mimeType};base64,${asset.base64}`;
-
       await user.setProfileImage({ file: dataUrl });
     } catch (error) {
       console.error("Avatar uppload failed:", error)
@@ -131,6 +129,9 @@ export default function ProfileScreen() {
       setUploadingAvatar(false)
     }
   }
+
+
+  
 
   const handleSignOut = () => {
     Alert.alert("Sign out", "Are you sure you want to sign out?", [
@@ -145,6 +146,7 @@ export default function ProfileScreen() {
       },
     ]);
   };
+
 
   const closeModal = () => {
     setModalVisible(false)
