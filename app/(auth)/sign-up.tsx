@@ -17,6 +17,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
 
 // Manual keyboard height tracker.
 // Needed because KeyboardAvoidingView's automatic resize is unreliable on
@@ -28,18 +29,15 @@ function useKeyboardHeight() {
   useEffect(() => {
     const showEvent = Platform.OS === "android" ? "keyboardDidShow" : "keyboardWillShow"
     const hideEvent = Platform.OS === "android" ? "keyboardDidHide" : "keyboardWillHide"
-
     const showSub = Keyboard.addListener(showEvent, (e) => {
       setHeight(e.endCoordinates.height)
     })
     const hideSub = Keyboard.addListener(hideEvent, () => setHeight(0))
-
     return () => {
       showSub.remove()
       hideSub.remove()
     }
   }, [])
-
   return height
 }
 
@@ -48,6 +46,7 @@ export default function SignUpScreen() {
   const { isSignedIn} = useAuth()
   const router = useRouter()
   const keyboardHeight = useKeyboardHeight()
+  const [showPassword, setShowPassword] = useState(false)
 
   const isLoading = fetchStatus === "fetching"
 
@@ -292,22 +291,36 @@ export default function SignUpScreen() {
             </Text>
           )}
 
-          <Controller
-            control={control}
-            name="password"
-            render={({ field: { value, onChange } }) => {
-              return (
-                <TextInput
-                  className="border border-[#E8E6DF] bg-white rounded-xl px-4 py-3 mb-2 text-[#1A1D26]"
-                  placeholder="Password"
-                  placeholderTextColor="#8A8D96"
-                  value={value}
-                  onChangeText={onChange}
-                  secureTextEntry
-                />
-              );
-            }}
-          />
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { value, onChange } }) => {
+                return (
+                  <View className="relative justify-center mb-2">
+                    <TextInput
+                      className="border border-[#E8E6DF] bg-white rounded-xl px-4 py-3 pr-12 text-[#1A1D26]"
+                      placeholder="Password"
+                      placeholderTextColor="#8A8D96"
+                      value={value}
+                      onChangeText={onChange}
+                      secureTextEntry={!showPassword}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-4"
+                    >
+                      <Ionicons
+                        name={showPassword ? "eye" : "eye-off"}
+                        size={20}
+                        color="#8A8D96"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                );
+              }}
+            />
+
+          
           {formErrors.password && (
             <Text className="text-brand-coral mb-4 text-sm">
               {formErrors.password.message}

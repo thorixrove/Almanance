@@ -2,7 +2,7 @@ import { codeSchema, SignInFormValues, signInSchema } from "@/lib/schemas/auth"
 import { useSignIn } from "@clerk/expo"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Link, useRouter } from "expo-router"
-import React from "react"
+import React, {useState} from "react"
 import { Controller, useForm } from "react-hook-form"
 import {
   ActivityIndicator,
@@ -14,10 +14,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons"
 
 export default function SignIn() {
   const { signIn, errors, fetchStatus} = useSignIn()
   const router = useRouter()
+  const [showPassword, setShowPassword] = useState(false)
   
     const {
       control,
@@ -206,17 +208,31 @@ export default function SignIn() {
           name="password"
           render={({ field: { value, onChange } }) => {
             return (
-              <TextInput
-                className="border border-[#E8E6DF] bg-white rounded-xl px-4 py-3 mb-2 text-[#1A1D26]"
-                placeholder="Password"
-                placeholderTextColor="#8A8D96"
-                value={value}
-                onChangeText={onChange}
-                secureTextEntry
-              />
+              <View className="relative justify-center mb-2">
+                <TextInput
+                  className="border border-[#E8E6DF] bg-white rounded-xl px-4 py-3 pr-12 text-[#1A1D26]"
+                  placeholder="Password"
+                  placeholderTextColor="#8A8D96"
+                  value={value}
+                  onChangeText={onChange}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-4"
+                >
+                  <Ionicons
+                    name={showPassword ? "eye" : "eye-off"}
+                    size={20}
+                    color="#8A8D96"
+                  />
+                </TouchableOpacity>
+              </View>
             );
           }}
         />
+
+
         {formErrors.password && (
           <Text className="text-brand-coral mb-4 text-sm">
             {formErrors.password.message}
