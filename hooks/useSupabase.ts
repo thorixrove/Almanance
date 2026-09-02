@@ -6,8 +6,17 @@ export function useSupabase() {
   const { getToken } = useAuth();
 
   const client = useMemo(
-    () => createClerkSupabaseClient(() => getToken()),
-    [] // empty deps — create the client once, getToken is captured in the closure
+    () => createClerkSupabaseClient(async () => {
+      try {
+        const token = await getToken();
+        console.log('CLERK_TOKEN_RESULT:', token ? 'GOT_TOKEN' : 'NULL_TOKEN');
+        return token;
+      } catch (e: any) {
+        console.log('CLERK_TOKEN_ERROR:', e.message);
+        throw e;
+      }
+    }),
+    []
   );
 
   return client;
