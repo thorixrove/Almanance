@@ -222,7 +222,7 @@ export default function SignIn() {
                   className="absolute right-4"
                 >
                   <Ionicons
-                    name={showPassword ? "eye" : "eye-off"}
+                    name={showPassword ? "eye-off" : "eye"}
                     size={20}
                     color="#8A8D96"
                   />

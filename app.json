@@ -22,6 +22,8 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
       "package": "com.thorixrover.almanance"
@@ -59,6 +61,12 @@
       "eas": {
         "projectId": "cc87a5f9-5e1b-4884-adc1-e005c6e6c63f"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/cc87a5f9-5e1b-4884-adc1-e005c6e6c63f"
     }
   }
 }
