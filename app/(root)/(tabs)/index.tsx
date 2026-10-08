@@ -26,6 +26,10 @@ import { getCategoryConfig } from "@/constants/categories"
 
 
 
+// Transaksi saldo awal dari onboarding bukan pemasukan sungguhan,
+// jadi tidak ikut dihitung di ringkasan pemasukan bulan ini.
+const STARTING_BALANCE_DESCRIPTION = "Starting balance"
+
 function getGreeting() {
   const hour = new Date().getHours()
   if (hour < 12 ) return "Good Morning"
@@ -83,7 +87,7 @@ export default function HomeScreen() {
   const onRefresh = () => {
     refetchAccounts()
     refetchTransactions()
-    refetchBudget
+    refetchBudget()
   }
 
   const totalBalance = useMemo(
@@ -99,7 +103,11 @@ export default function HomeScreen() {
   const monthIncome = useMemo(
     () => 
       monthTransactions
-    .filter((tx) => tx.type === "INCOME")
+    .filter(
+      (tx) =>
+        tx.type === "INCOME" &&
+        tx.description !== STARTING_BALANCE_DESCRIPTION
+    )
     .reduce((sum, tx) => sum + tx.amount, 0),
     [monthTransactions]
   )

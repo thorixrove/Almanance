@@ -204,7 +204,7 @@ export default function AddTransaction() {
     })
 
     if (createError) {
-      setError("Somthing went wrong. Please try again")
+      setError("Something went wrong. Please try again")
       return
     }
 

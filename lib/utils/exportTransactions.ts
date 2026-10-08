@@ -1,5 +1,5 @@
 import { Transaction } from "@/lib/services/transactions"
-import { Directory, File, Paths} from "expo-file-system"
+import { Directory, File, Paths } from "expo-file-system"
 import * as Sharing from "expo-sharing"
 import { format } from "date-fns"
 
@@ -15,12 +15,12 @@ function toCsvCell(value: string | number | null) {
 
 function buildCsv(transactions: Transaction[]) {
     const header = [
-    "Date",
-    "Type",
-    "Category",
-    "Description",
-    "Amount",
-    "Input Method",
+        "Date",
+        "Type",
+        "Category",
+        "Description",
+        "Amount",
+        "Input Method",
     ]
     const rows = transactions.map((tx) => [
         format(new Date(tx.date), "yyyy-MM-dd"),
@@ -31,9 +31,9 @@ function buildCsv(transactions: Transaction[]) {
         tx.input_method,
     ])
 
-    return [ header, ...rows]
-    .map((row) => row.map(toCsvCell).join(","))
-    .join("/n")
+    return [header, ...rows]
+        .map((row) => row.map(toCsvCell).join(","))
+        .join("\n")
 }
 
 export async function exportTransactionsToCsv(transactions: Transaction[]) {
