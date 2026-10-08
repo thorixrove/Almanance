@@ -44,7 +44,7 @@ export function BudgetModal({
       onSaved()
     } catch (error) {
       console.error("Error saving budget:", error)
-      setError("Somthing went wrong. Please try again")
+      setError("Something went wrong. Please try again")
     }
   }
 

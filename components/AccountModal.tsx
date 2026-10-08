@@ -64,7 +64,7 @@ export function AccountModal({
             }
             onSaved()
         } catch {
-            setError("Somthing went wrong. Please try again")
+            setError("Something went wrong. Please try again")
         }
     }
 

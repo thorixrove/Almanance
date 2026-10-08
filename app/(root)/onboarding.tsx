@@ -59,7 +59,7 @@ export default function OnBoardingScreen() {
 
     if (updateError) {
       setSaving(false)
-      setError("Somthing went wrong. Please try again.")
+      setError("Something went wrong. Please try again.")
       return
     }
 
@@ -72,23 +72,24 @@ export default function OnBoardingScreen() {
 
     if (accountFetchError || !defaultAccount) {
       setSaving(false)
-      setError("Somthig went wrong. Please try again.")
+      setError("Something went wrong. Please try again.")
       return
     }
 
-    const { error: txError} = await authSupabase.from("transaction").insert({
+    const { error: txError} = await authSupabase.from("transactions").insert({
       user_id: user!.id,
       account_id: defaultAccount.id,
-      type: parsed,
+      type: "INCOME",
+      amount: parsed,
       category: "other_income",
-      description: "Startinng balance",
+      description: "Starting balance",
       date: new Date().toISOString(),
       input_method: "MANUAL",
     })
 
     if (txError) {
       setSaving(false)
-      setError("Somthing went wrong. Please try again.")
+      setError("Something went wrong. Please try again.")
       return
     }
 
@@ -100,7 +101,7 @@ export default function OnBoardingScreen() {
     setSaving(false)
 
     if (balanceError) {
-      setError("Somthing went wrong. Please try again")
+      setError("Something went wrong. Please try again.")
       return
     }
 

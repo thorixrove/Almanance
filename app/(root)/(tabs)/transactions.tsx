@@ -26,6 +26,10 @@ import { useTransactionsQuery } from "@/hooks/queries/useTransactionsQuery"
 
 const FILTERS = ["ALL", "Income", "Expense"] as const
 
+// Transaksi saldo awal dari onboarding bukan pemasukan sungguhan,
+// jadi tidak ikut dihitung di grafik harian.
+const STARTING_BALANCE_DESCRIPTION = "Starting balance"
+
 function dayKey(date: Date) {
   return format(date, "yyyy-MM-dd")
 }
@@ -95,7 +99,10 @@ export default function TransactionsScreen() {
     return days.flatMap(({ key, label}) => {
       const income = transactions
       .filter(
-        (tx) => tx.type === "INCOME" && dayKey(new Date(tx.date)) === key
+        (tx) =>
+          tx.type === "INCOME" &&
+          tx.description !== STARTING_BALANCE_DESCRIPTION &&
+          dayKey(new Date(tx.date)) === key
       )
       .reduce((sum, tx) => sum + tx.amount, 0)
       const expense = transactions
