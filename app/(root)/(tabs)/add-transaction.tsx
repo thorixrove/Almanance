@@ -7,6 +7,7 @@ import { VoiceRecorderModal } from "@/components/VoiceRecorderModal";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, CategoryKey } from "@/constants/categories";
 import { useCreateTransactions } from "@/hooks/mutation/useTransactionMutations";
 import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery";
+import { useSupabase } from "@/hooks/useSupabase";
 import {
   TransactionFormValues,
   transactionSchema,
@@ -17,6 +18,7 @@ import {
   extractTransactionFromReceipt,
 } from "@/lib/services/extractTransaction";
 import { InputMethod } from "@/lib/services/transactions";
+import { parseAmount } from "@/lib/utils";
 import { useUser } from "@clerk/expo";
 import { Feather } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -91,6 +93,7 @@ export default function AddTransaction() {
   const { mutateAsync: createTransaction, isPending: saving} =
   useCreateTransactions()
 
+  const supabase = useSupabase();
   const [error, setError] = useState("");
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [inputMethod, setInputMethod] = useState<InputMethod>("MANUAL");
@@ -156,7 +159,7 @@ export default function AddTransaction() {
     setScannerOpen(false)
     setScanning(true)
     try {
-      const extracted = await extractTransactionFromReceipt(base64, mimeType)
+      const extracted = await extractTransactionFromReceipt(supabase, base64, mimeType)
       applyExtraction(extracted)
       setInputMethod("RECEIPT_SCAN")
     } catch (error) {
@@ -189,7 +192,7 @@ export default function AddTransaction() {
 
     setError("")
 
-    const parsed = parseFloat(values.amount.replace(/,/g, ""))
+    const parsed = parseAmount(values.amount)
 
     const {error: createError} = await createTransaction({
       user_id: user.id,
@@ -204,7 +207,7 @@ export default function AddTransaction() {
     })
 
     if (createError) {
-      setError("Something went wrong. Please try again")
+      setError("Something went wrong. Please try again.")
       return
     }
 
@@ -400,7 +403,7 @@ export default function AddTransaction() {
 
               {/* Description */}
               <Text className="text-brand-bg text-xs font-medium mb-1.5">
-                Description (option)
+                Description (optional)
               </Text>
               <Controller
               control={control}
@@ -410,7 +413,7 @@ export default function AddTransaction() {
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
-                placeholder="e.g. Swiggy order"
+                placeholder="e.g. Lunch at warung"
                 placeholderTextColor="#8A8D96"
                 className="bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-4 text-sm text-brand-bg"
                 />
@@ -427,7 +430,7 @@ export default function AddTransaction() {
               className="bg-brand-bg rounded-xl py-4 items-center mb-2"
               activeOpacity={0.85}
               >
-                <Text className="text-white textt-sm font-semibold">
+                <Text className="text-white text-sm font-semibold">
                   {saving ? "Saving.." : "Save transaction"}
                 </Text>
               </TouchableOpacity>

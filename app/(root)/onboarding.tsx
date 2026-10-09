@@ -1,6 +1,7 @@
 import { ALL_CURRENCIES, CurrencyPicker } from '@/components/CurrencyPicker'
 import { useSupabase } from '@/hooks/useSupabase'
 import { onboardingSchema, OnboardingFormValues } from "@/lib/schemas/onboarding"
+import { parseAmount } from '@/lib/utils'
 import { useUserStore } from '@/store/useStore'
 import { useUser } from '@clerk/expo'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -46,7 +47,7 @@ export default function OnBoardingScreen() {
 
 
   const handleSave = async ({ startingBalance}: OnboardingFormValues) => {
-    const parsed = parseFloat(startingBalance.replace(/,/g, ""))
+    const parsed = parseAmount(startingBalance)
     setSaving(true)
     setError("")
 
@@ -65,7 +66,7 @@ export default function OnBoardingScreen() {
 
     const { data: defaultAccount, error: accountFetchError} = await authSupabase
     .from("accounts")
-    .select("id, balance")
+    .select("id")
     .eq("user_id", user!.id)
     .eq("is_default", true)
     .single()
@@ -87,20 +88,10 @@ export default function OnBoardingScreen() {
       input_method: "MANUAL",
     })
 
-    if (txError) {
-      setSaving(false)
-      setError("Something went wrong. Please try again.")
-      return
-    }
-
-    const { error: balanceError} = await authSupabase
-    .from("accounts")
-    .update({ balance: defaultAccount.balance + parsed})
-    .eq("id", defaultAccount.id)
-
     setSaving(false)
 
-    if (balanceError) {
+    // Saldo akun diperbarui otomatis oleh trigger database.
+    if (txError) {
       setError("Something went wrong. Please try again.")
       return
     }

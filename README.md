@@ -1,50 +1,108 @@
-# Welcome to your Expo app 👋
+# Almanance
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplikasi pencatat keuangan pribadi berbasis React Native (Expo). Catat pemasukan dan pengeluaran secara manual, lewat **foto struk**, atau lewat **suara**, lalu pantau saldo, budget bulanan, dan riwayat transaksi.
 
-## Get started
+## Fitur
 
-1. Install dependencies
+- **Autentikasi** email dan password dengan verifikasi kode (Clerk)
+- **Onboarding**: pilih mata uang dan isi saldo awal
+- **Home**: total saldo, ringkasan pemasukan dan pengeluaran bulan ini, progres budget, pie chart per kategori, transaksi terbaru
+- **Tambah transaksi**:
+  - manual
+  - scan struk (kamera atau galeri)
+  - voice log (ucapkan transaksinya, mis. "makan siang dua puluh ribu")
+- **Transaksi**: filter (semua, pemasukan, pengeluaran), pencarian, grafik harian, hapus satu atau banyak sekaligus, export CSV (30 hari terakhir)
+- **Budget bulanan** yang bisa diatur dari Home
+
+Dalam pengembangan: tab Assistant, halaman Profile, dan pengelolaan akun (tambah, ubah, hapus, akun default).
+
+## Tech stack
+
+| Bagian | Teknologi |
+|---|---|
+| Framework | Expo SDK 54, React Native 0.81, Expo Router |
+| Styling | NativeWind (Tailwind) |
+| Auth | Clerk (`@clerk/expo`) |
+| Database | Supabase (Postgres + RLS), diakses dengan token Clerk |
+| Data fetching | TanStack Query |
+| State | Zustand |
+| Form | react-hook-form + zod |
+| AI | Groq (Whisper untuk suara, model vision untuk struk, model teks untuk ekstraksi), dipanggil lewat Supabase Edge Function |
+
+## Struktur folder
+
+```
+app/            Layar dan routing (Expo Router)
+components/     Komponen UI
+constants/      Kategori dan tema
+hooks/          Query, mutation, dan hook Supabase
+lib/            Service (akses data), schema zod, util
+store/          State global (Zustand)
+types/          Tipe TypeScript
+supabase/       Edge Function dan SQL
+```
+
+## Menjalankan di lokal
+
+1. Pasang dependensi:
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. Buat file `.env` di root proyek:
+
+   ```env
+   EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=
+   EXPO_PUBLIC_SUPABASE_URL=
+   EXPO_PUBLIC_SUPABASE_KEY=
+   ```
+
+   Key Groq **tidak** disimpan di aplikasi. Key itu hanya ada sebagai secret di Supabase (lihat bagian berikut).
+
+3. Jalankan aplikasi:
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+   Gunakan `npx expo start -c` untuk membersihkan cache setelah mengubah file di `lib/` atau `.env`.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Setup Supabase
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 1. Integrasi Clerk
 
-## Get a fresh project
+Di Supabase Dashboard buka **Authentication → Sign In / Up → Third Party Auth**, lalu tambahkan Clerk. Dengan ini Supabase menerima token Clerk, dan kebijakan RLS bisa memakai `auth.jwt()->>'sub'` sebagai id pengguna.
 
-When you're ready, run:
+### 2. Tabel
 
-```bash
-npm run reset-project
-```
+Tabel yang dipakai aplikasi: `user`, `accounts`, `transactions`, dan `budgets`. Aktifkan RLS di semuanya, dan batasi akses ke baris milik pengguna yang sedang login.
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 3. Trigger saldo akun
 
-## Learn more
+Saldo akun dihitung oleh database, bukan oleh aplikasi, supaya tetap akurat meski ada beberapa operasi bersamaan. Jalankan `supabase/balance_trigger.sql` di **SQL Editor**. Setelah itu setiap tambah, ubah, atau hapus transaksi otomatis menyesuaikan `accounts.balance`.
 
-To learn more about developing your project with Expo, look at the following resources:
+> Jangan menghitung atau mengubah saldo di kode aplikasi, nanti terhitung dua kali.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 4. Edge Function untuk AI
 
-## Join the community
+Pemanggilan Groq dilakukan di server lewat function `extract-transaction`.
 
-Join our community of developers creating universal apps.
+1. Buat function bernama `extract-transaction` dan isi dengan `supabase/functions/extract-transaction/index.ts` (lewat Dashboard atau `supabase functions deploy extract-transaction --no-verify-jwt`).
+2. Matikan **Verify JWT**. Pengecekan login dilakukan di dalam kode function, karena token Clerk tidak lolos pemeriksaan bawaan Supabase.
+3. Tambahkan secret `GROQ_API_KEY` di **Edge Functions → Secrets**.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Catatan pengembangan
+
+- Semua parsing nominal memakai `parseAmount` di `lib/utils.ts`, yang menerima format `1.500.000` maupun `1,500,000`. Jangan memakai `parseFloat` langsung pada input pengguna.
+- Format mata uang memakai `formatPrice` di `lib/utils.ts`.
+- Transaksi dengan deskripsi `Starting balance` dibuat saat onboarding dan tidak dihitung sebagai pemasukan di ringkasan.
+
+## Script
+
+| Perintah | Fungsi |
+|---|---|
+| `npm start` | Menjalankan Expo |
+| `npm run android` | Menjalankan di Android |
+| `npm run ios` | Menjalankan di iOS |
+| `npm run lint` | Menjalankan lint |
