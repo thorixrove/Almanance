@@ -1,10 +1,10 @@
 // Scheduled weekly (see scripts/cron_jobs.sql). For every user with at least
 // one transaction in the last 7 days, asks Groq for a few short,
 // personalized tips based on their spending and emails them.
-import { getCategoryConfig } from "../_shared/categories.ts";
-import { wrapEmail } from "../_shared/emailLayout.ts";
-import { sendEmail } from "../_shared/resend.ts";
-import { createSupabaseAdmin } from "../_shared/supabaseAdmin.ts";
+import { getCategoryConfig } from "../_shared/categories";
+import { wrapEmail } from "../_shared/emailLayout";
+import { sendEmail } from "../_shared/resend";
+import { createSupabaseAdmin } from "../_shared/supabaseAdmin";
 
 const GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions";
 // Text-only model with strict JSON Schema structured output support.
@@ -129,11 +129,11 @@ Deno.serve(async () => {
       })
       .join("");
 
-    const subject = "Your Welth weekly recap & money tips";
+    const subject = "Your Almanance weekly recap & money tips";
 
     const html = wrapEmail(`
       <p style="margin:0 0 16px;">Hi ${user.name ?? "there"},</p>
-      <p style="margin:0 0 20px;">Here's your weekly recap from Welth — a quick look at the last 7 days, plus a few tips to help you make the most of the week ahead.</p>
+      <p style="margin:0 0 20px;">Here's your weekly recap from Almanance — a quick look at the last 7 days, plus a few tips to help you make the most of the week ahead.</p>
       <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
         <tr>
           <td style="padding:10px 0;border-top:1px solid #E8E6DF;color:#5C5F68;">Income</td>

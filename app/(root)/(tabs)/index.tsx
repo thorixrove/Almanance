@@ -8,8 +8,8 @@ import { formatPrice } from "@/lib/utils"
 import { useUserStore } from "@/store/useStore"
 import { useUser } from "@clerk/expo"
 import { Feather } from "@expo/vector-icons"
-import { isSameMonth} from "date-fns"
-import {Image} from "expo-image"
+import { isSameMonth } from "date-fns"
+import { Image } from "expo-image"
 import { useRouter } from "expo-router"
 import { useMemo, useState } from "react"
 import {
@@ -32,7 +32,7 @@ const STARTING_BALANCE_DESCRIPTION = "Starting balance"
 
 function getGreeting() {
   const hour = new Date().getHours()
-  if (hour < 12 ) return "Good Morning"
+  if (hour < 12) return "Good Morning"
   if (hour < 18) return "Good Afternoon"
   return "Good evening"
 }
@@ -60,7 +60,7 @@ const QUICK_ACTIONS = [
 
 
 export default function HomeScreen() {
-  const { user} = useUser()
+  const { user } = useUser()
   const router = useRouter()
   const currency = useUserStore((s) => s.currency)
 
@@ -79,7 +79,7 @@ export default function HomeScreen() {
     isRefetching: transactionsRefetching,
     refetch: refetchTransactions,
   } = useTransactionsQuery()
-  const { data: budgets = null, refetch: refetchBudget} = useBudgetQuery()
+  const { data: budgets = null, refetch: refetchBudget } = useBudgetQuery()
 
   const loading = accountsLoading || transactionsLoading
   const refreshing = accountRefetching || transactionsRefetching
@@ -101,22 +101,22 @@ export default function HomeScreen() {
   }, [transactions])
 
   const monthIncome = useMemo(
-    () => 
+    () =>
       monthTransactions
-    .filter(
-      (tx) =>
-        tx.type === "INCOME" &&
-        tx.description !== STARTING_BALANCE_DESCRIPTION
-    )
-    .reduce((sum, tx) => sum + tx.amount, 0),
+        .filter(
+          (tx) =>
+            tx.type === "INCOME" &&
+            tx.description !== STARTING_BALANCE_DESCRIPTION
+        )
+        .reduce((sum, tx) => sum + tx.amount, 0),
     [monthTransactions]
   )
 
   const monthExpense = useMemo(
-    () => 
+    () =>
       monthTransactions
-    .filter((tx) => tx.type === "EXPENSE")
-    .reduce((sum, tx) => sum + tx.amount, 0),
+        .filter((tx) => tx.type === "EXPENSE")
+        .reduce((sum, tx) => sum + tx.amount, 0),
     [monthTransactions]
   )
 
@@ -128,28 +128,28 @@ export default function HomeScreen() {
   const expenseBreakedown = useMemo(() => {
     const map: Record<string, number> = {}
     monthTransactions
-    .filter((tx) => tx.type === "EXPENSE")
-    .forEach((tx) => {
-      map[tx.category] = (map[tx.category] ?? 0) + tx.amount
-    })
+      .filter((tx) => tx.type === "EXPENSE")
+      .forEach((tx) => {
+        map[tx.category] = (map[tx.category] ?? 0) + tx.amount
+      })
 
     return Object.entries(map)
-    .sort((a, b) => b[1] - a[1])
-    .map(([category, amount]) => ({
-      category: category as Transaction["category"],
-      amount,
-      color: getCategoryConfig(category as Transaction["category"]).color,
-    }))
+      .sort((a, b) => b[1] - a[1])
+      .map(([category, amount]) => ({
+        category: category as Transaction["category"],
+        amount,
+        color: getCategoryConfig(category as Transaction["category"]).color,
+      }))
   }, [monthTransactions])
 
   return (
     <SafeAreaView className="flex-1 bg-brand-bg" edges={["top"]}>
       <ScrollView
-      className="flex-1 bg-brand-body"
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
+        className="flex-1 bg-brand-body"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         {/* Dark hero header */}
         <View className="bg-brand-bg rounded-b-[28px] px-5 pt-5 pb-[22px]">
@@ -157,32 +157,32 @@ export default function HomeScreen() {
             <Image
               source={require("../../../assets/images/welth-light.png")}
               style={{ width: 80, height: "100%" }}
-              contentFit="contain"            
-              />
+              contentFit="contain"
+            />
             <View className="flex-row items-center gap-2.5">
               <View className="items-end">
                 <Text className="text-brand-text-secondary text-xs">
                   {getGreeting()}
-                  </Text>
-                    <Text className="text-brand-text-primary text-base font-medium">
-                    {user?.firstName ?? "there"}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                onPress={() => router.push("/(root)/(tabs)/profile")}
-                className="w-[38px] h-[38px] rounded-full bg-[#1A1D26] items-center justify-center overflow-hidden"                
-                >
-                  {user?.imageUrl && user.hasImage ? (
-                    <Image
-                    source={{ uri: user.imageUrl}}
-                    style={{ width: 38, height: 38}}
-                    contentFit="cover"
-                    />
-                  ) : (
-                  <Feather name="user" size={18} color="#8A8D96" />
-                  )}
-                </TouchableOpacity>
+                </Text>
+                <Text className="text-brand-text-primary text-base font-medium">
+                  {user?.firstName ?? "there"}
+                </Text>
               </View>
+              <TouchableOpacity
+                onPress={() => router.push("/(root)/(tabs)/profile")}
+                className="w-[38px] h-[38px] rounded-full bg-[#1A1D26] items-center justify-center overflow-hidden"
+              >
+                {user?.imageUrl && user.hasImage ? (
+                  <Image
+                    source={{ uri: user.imageUrl }}
+                    style={{ width: 38, height: 38 }}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <Feather name="user" size={18} color="#8A8D96" />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View className="mb-[22px]">
@@ -190,9 +190,9 @@ export default function HomeScreen() {
               Total balance
             </Text>
             <Text className="text-brand-text-primary text-[38px] font-medium tracking-tight">
-              {formatPrice(totalBalance, currency)}              
+              {formatPrice(totalBalance, currency)}
             </Text>
-          <View className="flex-row gap-3.5 mt-2.5">
+            <View className="flex-row gap-3.5 mt-2.5">
               <View className="flex-row items-center gap-1.5">
                 <Feather name="arrow-up-right" size={14} color="#3DDC84" />
                 <Text className="text-brand-success text-[13px]">
@@ -202,7 +202,7 @@ export default function HomeScreen() {
               <View className="flex-row items-center gap-1.5">
                 <Feather name="arrow-down-right" size={14} color="#FF6B4A" />
                 <Text className="text-brand-coral text-[13px]">
-                    {formatPrice(monthExpense, currency)}
+                  {formatPrice(monthExpense, currency)}
                 </Text>
               </View>
             </View>
@@ -211,21 +211,21 @@ export default function HomeScreen() {
           <View className="flex-row gap-2.5">
             {QUICK_ACTIONS.map((action) => (
               <TouchableOpacity
-              key={action.label}
-              onPress={() => 
-                router.push({
-                  pathname: "/(root)/(tabs)/add-transaction",
-                  params: {action: action.action},
-                })
-              }
-              activeOpacity={0.75}
-                 className="flex-1 bg-brand-surface rounded-2xl border border-brand-surface-border py-4 items-center gap-2"
+                key={action.label}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(root)/(tabs)/add-transaction",
+                    params: { action: action.action },
+                  })
+                }
+                activeOpacity={0.75}
+                className="flex-1 bg-brand-surface rounded-2xl border border-brand-surface-border py-4 items-center gap-2"
               >
                 <View
                   className="w-9 h-9 rounded-full items-center justify-center"
                   style={{ backgroundColor: `${action.color}26` }}
                 >
-                <Feather name={action.icon} size={17} color={action.color} />
+                  <Feather name={action.icon} size={17} color={action.color} />
                 </View>
                 <Text className="text-[#B8BAC2] text-[11px] font-medium text-center">
                   {action.label}
@@ -280,8 +280,8 @@ export default function HomeScreen() {
                         monthExpense >= budgets.amount
                           ? "#FF6B4A"
                           : monthExpense >= budgets.amount * 0.8
-                          ? "#F7DC6F"
-                          : "#3DDC84",
+                            ? "#F7DC6F"
+                            : "#3DDC84",
                     }}
                   />
                 </View>
@@ -309,7 +309,7 @@ export default function HomeScreen() {
                   innerCircleColor="#fff"
                 />
                 <View className="flex-1 ml-4 gap-1.5">
-                  {expenseBreakedown.slice(0,6).map((c) => (
+                  {expenseBreakedown.slice(0, 6).map((c) => (
                     <View
                       key={c.category}
                       className="flex-row items-center justify-between"
@@ -322,13 +322,13 @@ export default function HomeScreen() {
                         <Text className="text-brand-text-secondary text-[11px]">
                           {getCategoryConfig(c.category).label}
                         </Text>
-                        </View>
+                      </View>
                       <Text className="text-brand-bg text-[11px] font-medium">
                         {formatPrice(c.amount, currency)}
-                        </Text>
-                      </View>
+                      </Text>
+                    </View>
                   ))}
-                  </View>
+                </View>
               </View>
             </View>
           )}
@@ -348,14 +348,14 @@ export default function HomeScreen() {
             <View className="items-center py-6">
               <ActivityIndicator color="#4A9EFF" />
             </View>
-          ): recentTransactions.length === 0 ? (
+          ) : recentTransactions.length === 0 ? (
             <View className="items-center py-6">
               <Feather name="inbox" size={28} color="#BDC3C7" />
               <Text className="text-brand-text-muted text-sm mt-3">
                 No transactions yet
               </Text>
             </View>
-          ): (
+          ) : (
             recentTransactions.map((tx) => (
               <TransactionRow key={tx.id} tx={tx} />
             ))
@@ -363,14 +363,14 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-          {user && (
-            <BudgetModal
+      {user && (
+        <BudgetModal
           visible={budgetModalOpen}
           budget={budgets}
           onClose={() => setBudgetModalOpen(false)}
           onSaved={() => setBudgetModalOpen(false)}
-            />
-          )}
+        />
+      )}
     </SafeAreaView>
   )
 }
