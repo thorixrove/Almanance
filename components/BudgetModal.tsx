@@ -1,6 +1,7 @@
 import { useUpsertBudget } from "@/hooks/mutation/useBudgetMutations"
 import {Budget} from "@/lib/services/budgets"
 import { COLORS } from "@/constants/theme"
+import { parseAmount } from "@/lib/utils"
 import { FormSheetModal } from "./FormSheetModal"
 import { useEffect, useState } from "react"
 import { Text, TextInput, TouchableOpacity } from "react-native";
@@ -29,11 +30,9 @@ export function BudgetModal({
   }, [visible, budget])
 
   const handleSave = async () => {
-    // (pemisah ribuan), baru koma jadi titik desimal
-    const normalized = amount.replace(/\./g, "").replace(",", ".")
-    const parsedAmount = parseFloat(normalized)
-
-    if(!parsedAmount || parsedAmount <= 0) {
+    const parsedAmount = parseAmount(amount)
+    
+    if(!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       setError("Enter a valid monthly budget.")
       return
     }

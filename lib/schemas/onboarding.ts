@@ -1,3 +1,4 @@
+import { parseAmount } from "@/lib/utils"
 import {z} from "zod"
 
 export const onboardingSchema = z.object({
@@ -5,8 +6,8 @@ export const onboardingSchema = z.object({
     .string()
     .min(1, "Please enter a satarting balance.")
     .refine((v) => {
-        const parsed = parseFloat(v.replace(/,/g, ""))
-        return !Number.isNaN(parsed) && parsed > 0
+        const parsed = parseAmount(v)
+        return Number.isFinite(parsed) && parsed > 0
     }, "Please enter a valid balance."),
 })
 

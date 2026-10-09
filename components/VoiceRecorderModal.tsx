@@ -1,4 +1,5 @@
 import { extractTransactionFromVoice, ExtractedTransaction } from "@/lib/services/extractTransaction"
+import { useSupabase } from "@/hooks/useSupabase"
 import { GradientIconButton } from "./GradientIconButton"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import { File } from "expo-file-system"
@@ -102,6 +103,7 @@ export function VoiceRecorderModal({
     // Renamed from "Status" (capital S) to "status" (lowercase) to match
     // every other usage in this file, and to avoid colliding with the
     // "Status" type alias defined above.
+    const supabase = useSupabase()
     const [status, setStatus] = useState<Status>("idle")
     const [seconds, setSeconds] = useState(0)
 
@@ -184,7 +186,7 @@ export function VoiceRecorderModal({
 
                 const file = new File(uri)
                 const base64 = await file.base64()
-                const result = await extractTransactionFromVoice(base64, "audio/m4a")
+                const result = await extractTransactionFromVoice(supabase, base64, "audio/m4a")
                 onExtracted(result)
                 onClose()
         } catch (error) {

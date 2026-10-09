@@ -38,32 +38,14 @@ export async function createTransaction(
     supabase: SupabaseClient,
     payload: NewTransaction
 ) {
-    const { data: transactions, error: insertError } = await supabase
+    const {data, error} = await supabase
     .from("transactions")
     .insert(payload)
     .select()
-    .single();
+    .single()
 
-    if (insertError) return { transactions, error: insertError}
-
-    const { data: accounts, error: fetchError } = await supabase
-    .from("accounts")
-    .select("balance")
-    .eq("id", payload.account_id)
-    .single();
-
-     if (fetchError) return { transactions, error: fetchError };
-
-    const delta = payload.type === "INCOME" ? payload.amount : -payload.amount;
-
-  const { error: balanceError } = await supabase
-    .from("accounts")
-    .update({ balance: accounts.balance + delta })
-    .eq("id", payload.account_id);
-
-  if (balanceError) return { transactions, error: balanceError };
-
-  return { transaction: transactions as Transaction, error: null };
+    if ( error) return {transaction: null, error}
+    return {transaction: data as Transaction, error: null}
 }
 
 
@@ -71,40 +53,18 @@ export async function createTransaction(
 export async function deleteTransaction (
     supabase: SupabaseClient,
     transactionId: string,
-    accountId: string,
-    amount: number,
-    type: TransactionType
+    _accountId?: string,
+    _amount?: number,
+    _type?: TransactionType
  ) {
-    const { error: deleteError} = await supabase
+    const { error} = await supabase
     .from("transactions")
     .delete()
     .eq("id", transactionId)
 
-    if (deleteError) return {error: deleteError}
-
-    const { data: accounts, error: fetchError} = await supabase
-    .from("accounts")
-    .select("balance")
-    .eq("id", accountId)
-    .single()
-
-    if (fetchError) return { error: fetchError}
-
-    const delta = type === "INCOME" ? -amount : amount
-
-    const { error: balanceError} = await supabase
-    .from("accounts")
-    .update({balance: accounts.balance + delta})
-    .eq("id", accountId)
-
-    if (balanceError) return { error: balanceError}
-    
-    return { error: null}
+    return {error}
 }
 
-// Bulk delete: removes many transactions in one request and corrects the
-// balance of every affected account (selected transactions can belong to
-// different accounts, so deltas are grouped per account first).
 export async function deleteTransactions(
     supabase: SupabaseClient,
     transactions: Pick<Transaction, "id" | "account_id" | "amount" | "type">[]
@@ -113,35 +73,10 @@ export async function deleteTransactions(
 
     const ids = transactions.map((tx) => tx.id)
 
-    const { error: deleteError } = await supabase
+    const { error } = await supabase
         .from("transactions")
         .delete()
         .in("id", ids)
 
-    if (deleteError) return { error: deleteError }
-
-    const deltaByAccount = new Map<string, number>()
-    for (const tx of transactions) {
-        const delta = tx.type === "INCOME" ? -tx.amount : tx.amount
-        deltaByAccount.set(tx.account_id, (deltaByAccount.get(tx.account_id) ?? 0) + delta)
-    }
-
-    for (const [accountId, delta] of deltaByAccount) {
-        const { data: account, error: fetchError } = await supabase
-            .from("accounts")
-            .select("balance")
-            .eq("id", accountId)
-            .single()
-
-        if (fetchError) return { error: fetchError }
-
-        const { error: balanceError } = await supabase
-            .from("accounts")
-            .update({ balance: account.balance + delta })
-            .eq("id", accountId)
-
-        if (balanceError) return { error: balanceError }
-    }
-
-    return { error: null }
+    return { error }
 }
