@@ -7,15 +7,15 @@ export function wrapEmail(bodyHtml: string) {
       <div style="background:#0B0E14;padding:20px 28px;">
         ${
           LOGO_URL
-            ? `<img src="${LOGO_URL}" alt="Welth" height="24" style="display:block;height:24px;width:auto;" />`
-            : `<span style="color:#FFFFFF;font-size:16px;font-weight:600;letter-spacing:0.2px;">Welth</span>`
+            ? `<img src="${LOGO_URL}" alt="Almanance" height="24" style="display:block;height:24px;width:auto;" />`
+            : `<span style="color:#FFFFFF;font-size:16px;font-weight:600;letter-spacing:0.2px;">Almanance</span>`
         }
       </div>
       <div style="padding:28px;color:#1A1D26;font-size:14px;line-height:1.6;">
         ${bodyHtml}
       </div>
       <div style="padding:16px 28px;border-top:1px solid #E8E6DF;">
-        <span style="color:#8A8D96;font-size:11px;">You're receiving this because you have an account with Welth. Manage your budget anytime in the app.</span>
+        <span style="color:#8A8D96;font-size:11px;">You're receiving this because you have an account with Almanance. Manage your budget anytime in the app.</span>
       </div>
     </div>
   </div>`;
