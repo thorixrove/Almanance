@@ -10,6 +10,7 @@ import { useSupabase } from '@/hooks/useSupabase'
 import { Account, AccountType} from "@/lib/services/accounts"
 import { formatPrice } from '@/lib/utils'
 import { useUserStore } from '@/store/useStore'
+import { authenticate, getBiometricSupport } from '@/lib/biometric'
 import { Feather } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import * as ImagePicker from "expo-image-picker"
@@ -80,7 +81,8 @@ export default function ProfileScreen() {
   const supabase = useSupabase()
   const currency = useUserStore((state) => state.currency)
   const setCurrency = useUserStore((state) => state.setCurrency)
-  const [biometricLock, setBiometricLock] = useState(false)
+  const biometricEnabled = useUserStore((state) => state.biometricEnabled)
+  const setBiometricLock = useUserStore((state) => state.setBiometricLock)
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
@@ -95,6 +97,31 @@ export default function ProfileScreen() {
   const { mutateAsync: setDefaultAccount } = useSetDefaultAccount()
 
 
+
+  const handleToggleBiometric = async (next: boolean) => {
+    try {
+      if (next) {
+        const support = await getBiometricSupport()
+        if (!support.available) {
+          Alert.alert(
+            "Biometric tidak tersedia",
+            support.reason === "no_hardware"
+              ? "Perangkat ini tidak punya sensor sidik jari atau wajah."
+              : "Belum ada sidik jari atau wajah yang terdaftar. Daftarkan dulu di pengaturan perangkat."
+          )
+          return
+        }
+      }
+      // Verifikasi dulu, baik saat mengaktifkan maupun menonaktifkan
+      const ok = await authenticate(
+        next ? "Konfirmasi untuk mengaktifkan kunci" : "Konfirmasi untuk menonaktifkan kunci"
+      )
+      if (!ok) return
+      await setBiometricLock(next)
+    } catch {
+      Alert.alert("Gagal", "Pengaturan biometric tidak dapat diubah. Coba lagi.")
+    }
+  }
 
   const handlePickAvatar = async () => {
     if (!user) return
@@ -281,7 +308,10 @@ export default function ProfileScreen() {
               <Feather name="lock" size={15} color="#5C5F68" />
             </View>
             <Text className="flex-1 text-sm text-brand-bg">Biometric lock</Text>
-            <Switch value={biometricLock} onValueChange={setBiometricLock} />
+            <Switch
+              value={biometricEnabled === true}
+              onValueChange={handleToggleBiometric}
+            />
           </View>
       </View>
 
