@@ -386,15 +386,6 @@ export default function TransactionsScreen() {
             ))}
           </View>
         </ScrollView>
-
-        {!selectionMode && transactions.length > 0 && (
-          <View className="flex-row items-center gap-1.5 mt-2.5">
-            <Feather name="chevrons-left" size={13} color="#8A8D96" />
-            <Text className="text-[11px] text-brand-text-muted">
-              Swipe a transaction left to edit or delete
-            </Text>
-          </View>
-        )}
       </View>
 
       {loading ? (
