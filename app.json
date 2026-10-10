@@ -48,6 +48,12 @@
       ],
       "@clerk/expo",
       "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Almanance to use Face ID to unlock the app."
+        }
+      ],
       "expo-audio",
       "expo-asset"
     ],
