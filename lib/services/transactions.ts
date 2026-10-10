@@ -1,18 +1,18 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
 import type {
-  NewTransaction,
-  Transaction,
-  TransactionFilters,
-  TransactionType,
+    NewTransaction,
+    Transaction,
+    TransactionFilters,
+    TransactionType,
 } from "@/types/transaction";
 
 export type {
-  InputMethod,
-  NewTransaction,
-  Transaction,
-  TransactionFilters,
-  TransactionType,
+    InputMethod,
+    NewTransaction,
+    Transaction,
+    TransactionFilters,
+    TransactionType,
 } from "@/types/transaction"
 
 
@@ -27,7 +27,7 @@ export async function getTransactions(
     if (filters.type) query = query.eq("type", filters.type)
     if (filters.accountId) query = query.eq("account_id", filters.accountId)
 
-    const { data, error} = await query.order("date", {ascending: false})
+    const { data, error } = await query.order("date", { ascending: false })
 
     if (error) throw error
     return data as Transaction[]
@@ -38,31 +38,54 @@ export async function createTransaction(
     supabase: SupabaseClient,
     payload: NewTransaction
 ) {
+    const { data, error } = await supabase
+        .from("transactions")
+        .insert(payload)
+        .select()
+        .single()
+
+    if (error) return { transaction: null, error }
+    return { transaction: data as Transaction, error: null }
+}
+
+export type UpdateTransactionPayload = Partial<
+    Pick<
+        NewTransaction,
+        "account_id" | "type" | "amount" | "category" | "description" | "date"
+    >
+>
+
+export async function updateTransaction(
+    supabase: SupabaseClient,
+    transactionId: string,
+    payload: UpdateTransactionPayload
+) {
     const {data, error} = await supabase
     .from("transactions")
-    .insert(payload)
+    .update(payload)
+    .eq("id", transactionId)
     .select()
     .single()
 
-    if ( error) return {transaction: null, error}
+    if (error) return {transaction: null, error}
     return {transaction: data as Transaction, error: null}
 }
 
 
 
-export async function deleteTransaction (
+export async function deleteTransaction(
     supabase: SupabaseClient,
     transactionId: string,
     _accountId?: string,
     _amount?: number,
     _type?: TransactionType
- ) {
-    const { error} = await supabase
-    .from("transactions")
-    .delete()
-    .eq("id", transactionId)
+) {
+    const { error } = await supabase
+        .from("transactions")
+        .delete()
+        .eq("id", transactionId)
 
-    return {error}
+    return { error }
 }
 
 export async function deleteTransactions(
