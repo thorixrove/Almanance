@@ -1,4 +1,5 @@
 import { TransactionRow } from "@/components/TransactionRow"
+import { EditTransactionModal } from "@/components/EditTransactionModal"
 import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery"
 import { useDeleteTransactions, useDeleteTransactionsBulk } from "@/hooks/mutation/useTransactionMutations"
 import { Transaction, TransactionType } from "@/lib/services/transactions"
@@ -55,6 +56,10 @@ export default function TransactionsScreen() {
   // of the normal swipe-to-delete / navigate behavior.
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  // Snapshot transaksi yang sedang diedit. Disimpan sebagai state (bukan dicari
+  // ulang dari list) supaya refetch tidak me-reset isian form saat user mengetik.
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null)
 
 
   const typeFilter: TransactionType | null =
@@ -159,6 +164,19 @@ export default function TransactionsScreen() {
     [removeTransactions]
   )
 
+  // Ketuk baris -> buka form edit. Saldo awal dikunci karena dikenali lewat
+  // deskripsinya; kalau deskripsi diubah, ia akan dihitung sebagai pemasukan biasa.
+  const handleEdit = useCallback((tx: Transaction) => {
+    if (tx.description === STARTING_BALANCE_DESCRIPTION) {
+      Alert.alert(
+        "Starting balance",
+        "The starting balance is set during onboarding and can't be edited here."
+      )
+      return
+    }
+    setEditingTx(tx)
+  }, [])
+
   // Long-pressing any row (when not already selecting) enters selection
   // mode and selects that row.
   const handleLongPress = useCallback((tx: Transaction) => {
@@ -222,9 +240,10 @@ export default function TransactionsScreen() {
         selectionMode={selectionMode}
         selected={selectedIds.has(item.id)}
         onToggleSelect={handleToggleSelect}
+        onEdit={selectionMode ? undefined : handleEdit}
       />
     ),
-    [selectionMode, selectedIds, handelDelete, handleLongPress, handleToggleSelect]
+    [selectionMode, selectedIds, handelDelete, handleLongPress, handleToggleSelect, handleEdit]
   )
 
   return (
@@ -367,6 +386,15 @@ export default function TransactionsScreen() {
             ))}
           </View>
         </ScrollView>
+
+        {!selectionMode && transactions.length > 0 && (
+          <View className="flex-row items-center gap-1.5 mt-2.5">
+            <Feather name="chevrons-left" size={13} color="#8A8D96" />
+            <Text className="text-[11px] text-brand-text-muted">
+              Swipe a transaction left to edit or delete
+            </Text>
+          </View>
+        )}
       </View>
 
       {loading ? (
@@ -461,6 +489,13 @@ export default function TransactionsScreen() {
           />
         )}
 
+
+      <EditTransactionModal
+        visible={editingTx !== null}
+        transaction={editingTx}
+        onClose={() => setEditingTx(null)}
+        onSaved={() => setEditingTx(null)}
+      />
 
         {/* Add trancation FAB - nvaigate to the Add tab */}
       {/* <TouchableOpacity

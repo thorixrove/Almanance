@@ -5,6 +5,12 @@ import { Feather } from "@expo/vector-icons";
 import { memo } from "react";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import { Text, TouchableOpacity, View } from "react-native";
+import Animated, {
+  Extrapolation,
+  interpolate,
+  SharedValue,
+  useAnimatedStyle,
+} from "react-native-reanimated";
 import { useUserStore } from "@/store/useStore";
 
 
@@ -17,6 +23,44 @@ keyof typeof Feather.glyphMap
     VOICE: "mic",
 }
 
+// Tombol aksi yang muncul saat baris digeser. Muncul bertahap (fade + membesar)
+// mengikuti progress geseran, jadi terasa halus, bukan tiba-tiba terlihat.
+function SwipeActions({
+    progress,
+    onEdit,
+    onDelete,
+}: {
+    progress: SharedValue<number>
+    onEdit?: () => void
+    onDelete: () => void
+}) {
+    const style = useAnimatedStyle(() => ({
+        opacity: interpolate(progress.value, [0, 0.4, 1], [0, 0.7, 1], Extrapolation.CLAMP),
+        transform: [
+            { scale: interpolate(progress.value, [0, 1], [0.85, 1], Extrapolation.CLAMP) },
+        ],
+    }))
+
+    return (
+        <Animated.View style={[{ flexDirection: "row" }, style]}>
+            {onEdit && (
+                <TouchableOpacity
+                    onPress={onEdit}
+                    className="bg-brand-blue rounded-2xl ml-2 w-16 items-center justify-center"
+                >
+                    <Feather name="edit-2" size={18} color="#fff" />
+                </TouchableOpacity>
+            )}
+            <TouchableOpacity
+                onPress={onDelete}
+                className="bg-brand-coral rounded-2xl ml-2 w-16 items-center justify-center"
+            >
+                <Feather name="trash-2" size={18} color="#fff" />
+            </TouchableOpacity>
+        </Animated.View>
+    )
+}
+
 function TransactionRowComponent({
     tx,
     onDelete,
@@ -24,8 +68,11 @@ function TransactionRowComponent({
     selectionMode = false,
     selected = false,
     onToggleSelect,
+    onEdit,
 }: {
     tx: Transaction;
+    // Dipanggil dari tombol Edit yang muncul saat baris digeser ke kiri.
+    onEdit?: (tx: Transaction) => void
     // now receives the transaction, so the parent can pass a single
     // stable function reference instead of creating a new closure
     // per row on every render.
@@ -107,6 +154,16 @@ function TransactionRowComponent({
         {isIncome ? "+" : "-"}
         {formatPrice(tx.amount, currency)}
       </Text>
+
+      {/* Petunjuk visual: baris ini bisa digeser ke kiri */}
+      {(onEdit || onDelete) && (
+        <Feather
+          name="chevron-left"
+          size={14}
+          color="#C7C9D1"
+          style={{ marginLeft: 6 }}
+        />
+      )}
     </View>
     )
 
@@ -141,13 +198,24 @@ function TransactionRowComponent({
       <View className="mb-2.5">
       <Swipeable
         overshootRight={false}
-        renderRightActions={() => (
-          <TouchableOpacity
-            onPress={() => onDelete(tx)}
-            className="bg-brand-coral rounded-2xl ml-2 w-16 items-center justify-center"
-          >
-            <Feather name="trash-2" size={18} color="#fff" />
-          </TouchableOpacity>
+        rightThreshold={36}
+        animationOptions={{ damping: 22, stiffness: 240 }}
+        renderRightActions={(progress, _translation, swipeable) => (
+          <SwipeActions
+            progress={progress}
+            onEdit={
+              onEdit
+                ? () => {
+                    swipeable.close()
+                    onEdit(tx)
+                  }
+                : undefined
+            }
+            onDelete={() => {
+              swipeable.close()
+              onDelete(tx)
+            }}
+          />
         )}
       >
         <TouchableOpacity
