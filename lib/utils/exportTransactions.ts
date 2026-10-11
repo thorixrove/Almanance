@@ -36,13 +36,19 @@ function buildCsv(transactions: Transaction[]) {
         .join("\n")
 }
 
-export async function exportTransactionsToCsv(transactions: Transaction[]) {
+// applyWindow = true  -> hanya 30 hari terakhir (perilaku lama, saat tanpa filter tanggal).
+// applyWindow = false -> ekspor semua yang diberikan (saat user sudah memilih rentang tanggal).
+export async function exportTransactionsToCsv(
+    transactions: Transaction[],
+    options: { applyWindow?: boolean } = {}
+) {
+    const { applyWindow = true } = options
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - EXPORT_WINDOW_DAYS)
 
-    const recentTransactions = transactions.filter(
-        (tx) => new Date(tx.date) >= cutoff
-    )
+    const recentTransactions = applyWindow
+        ? transactions.filter((tx) => new Date(tx.date) >= cutoff)
+        : transactions
 
     const csv = buildCsv(recentTransactions)
     const fileName = `transactions-${format(new Date(), "yyyy-MM-dd")}.csv`

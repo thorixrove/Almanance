@@ -19,10 +19,24 @@ import {
   TouchableOpacity,
   View,
 } from "react-native"
-import { eachDayOfInterval, format, startOfDay, startOfMonth } from "date-fns"
+import {
+  differenceInCalendarDays,
+  eachDayOfInterval,
+  eachMonthOfInterval,
+  format,
+  startOfDay,
+  startOfMonth,
+} from "date-fns"
 import { BarChart } from "react-native-gifted-charts"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useTransactionsQuery } from "@/hooks/queries/useTransactionsQuery"
+import { DateRangeSheet } from "@/components/DateRangeSheet"
+import {
+  ALL_TIME,
+  DateRange,
+  formatRangeLabel,
+  toFilterDates,
+} from "@/lib/utils/dateRange"
 
 
 const FILTERS = ["ALL", "Income", "Expense"] as const
@@ -31,15 +45,49 @@ const FILTERS = ["ALL", "Income", "Expense"] as const
 // jadi tidak ikut dihitung di grafik harian.
 const STARTING_BALANCE_DESCRIPTION = "Starting balance"
 
+// Lebih dari ini -> grafik dikelompokkan per bulan supaya tetap terbaca.
+const MAX_DAILY_BARS = 62
+
 function dayKey(date: Date) {
   return format(date, "yyyy-MM-dd")
 }
 
-function currentMonthDays() {
+function monthKey(date: Date) {
+  return format(date, "yyyy-MM")
+}
+
+// Tentukan bucket grafik dari rentang tanggal. Tanpa rentang (All time),
+// grafik tetap menampilkan bulan berjalan seperti sebelumnya.
+function buildChartBuckets(range: DateRange) {
   const today = startOfDay(new Date())
-  return eachDayOfInterval({ start: startOfMonth(today), end: today}).map(
-    (d) => ({ key: dayKey(d), label: format(d, "d MMM")})
-  )
+  const from =
+    range.from && range.to ? startOfDay(range.from) : startOfMonth(today)
+  const rawTo = range.from && range.to ? startOfDay(range.to) : today
+  const to = rawTo > today ? today : rawTo
+
+  if (from > to) {
+    return { monthly: false, keyOf: dayKey, buckets: [] as { key: string; label: string }[] }
+  }
+
+  if (differenceInCalendarDays(to, from) + 1 > MAX_DAILY_BARS) {
+    return {
+      monthly: true,
+      keyOf: monthKey,
+      buckets: eachMonthOfInterval({ start: from, end: to }).map((d) => ({
+        key: monthKey(d),
+        label: format(d, "MMM yy"),
+      })),
+    }
+  }
+
+  return {
+    monthly: false,
+    keyOf: dayKey,
+    buckets: eachDayOfInterval({ start: from, end: to }).map((d) => ({
+      key: dayKey(d),
+      label: format(d, "d MMM"),
+    })),
+  }
 }
 
 export default function TransactionsScreen() {
@@ -50,6 +98,9 @@ export default function TransactionsScreen() {
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [exporting, setExporting] = useState(false)
+  const [dateRange, setDateRange] = useState<DateRange>(ALL_TIME)
+  const [rangeSheetOpen, setRangeSheetOpen] = useState(false)
+  const rangeActive = dateRange.preset !== "ALL"
 
   // Multi-select state: entered via long-press on a row or the header
   // "Select" button. While active, tapping rows toggles selection instead
@@ -75,7 +126,11 @@ export default function TransactionsScreen() {
     isRefetching: transactionsRefetching,
     isError: transactionsError,
     refetch: refetchTransactions,
-  } = useTransactionsQuery({ type: typeFilter, accountId: activeAccountId})
+  } = useTransactionsQuery({
+    type: typeFilter,
+    accountId: activeAccountId,
+    ...toFilterDates(dateRange),
+  })
   const { data: accounts = [], refetch: refetchAccounts} = useAccountsQuery()
   const { mutateAsync: removeTransactions} = useDeleteTransactions()
   const { mutateAsync: removeTransactionsBulk, isPending: bulkDeleting } = useDeleteTransactionsBulk()
@@ -99,36 +154,48 @@ export default function TransactionsScreen() {
     )
   }, [transactions, search])
 
+  const chart = useMemo(() => buildChartBuckets(dateRange), [dateRange])
+
   const dailyIncomeExpense = useMemo(() => {
-    const days = currentMonthDays()
-    return days.flatMap(({ key, label}) => {
-      const income = transactions
-      .filter(
-        (tx) =>
-          tx.type === "INCOME" &&
-          tx.description !== STARTING_BALANCE_DESCRIPTION &&
-          dayKey(new Date(tx.date)) === key
-      )
-      .reduce((sum, tx) => sum + tx.amount, 0)
-      const expense = transactions
-      .filter(
-        (tx) => tx.type === "EXPENSE" && dayKey(new Date(tx.date)) == key
-      )
-      .reduce((sum, tx) => sum + tx.amount, 0)
-      return [
-        { value: income, label, frontColor: "#3DDC84" },
-        { value: expense, frontColor: "#FF6B4A" },      
-      ]
-    })
-  }, [transactions])
+    const income = new Map<string, number>()
+    const expense = new Map<string, number>()
+
+    for (const tx of transactions) {
+      const key = chart.keyOf(new Date(tx.date))
+      if (tx.type === "INCOME") {
+        if (tx.description === STARTING_BALANCE_DESCRIPTION) continue
+        income.set(key, (income.get(key) ?? 0) + tx.amount)
+      } else if (tx.type === "EXPENSE") {
+        expense.set(key, (expense.get(key) ?? 0) + tx.amount)
+      }
+    }
+
+    return chart.buckets.flatMap(({ key, label }) => [
+      { value: income.get(key) ?? 0, label, frontColor: "#3DDC84" },
+      { value: expense.get(key) ?? 0, frontColor: "#FF6B4A" },
+    ])
+  }, [transactions, chart])
+
+  const handleApplyRange = (range: DateRange) => {
+    setDateRange(range)
+    // Pilihan lama bisa berisi transaksi yang sudah tidak tampil.
+    setSelectedIds(new Set())
+  }
 
   const handleExport = async () => {
     if (exporting) return
     setExporting(true)
     try {
-      const {count} = await exportTransactionsToCsv(transactions)
+      const {count} = await exportTransactionsToCsv(transactions, {
+        applyWindow: !rangeActive,
+      })
       if (count === 0) {
-        Alert.alert("Nothing to export", "No transactions in the export window.")
+        Alert.alert(
+          "Nothing to export",
+          rangeActive
+            ? "No transactions in the selected date range."
+            : "No transactions in the export window."
+        )
       }
     } catch (error) {
       console.error("Expoert failed", error)
@@ -387,14 +454,35 @@ export default function TransactionsScreen() {
           </View>
         </ScrollView>
 
-        {!selectionMode && transactions.length > 0 && (
-          <View className="flex-row items-center gap-1.5 mt-2.5">
-            <Feather name="chevrons-left" size={13} color="#8A8D96" />
-            <Text className="text-[11px] text-brand-text-muted">
-              Swipe a transaction left to edit or delete
+        <View className="flex-row items-center gap-2 mt-2.5">
+          <TouchableOpacity
+            onPress={() => setRangeSheetOpen(true)}
+            className={`flex-row items-center gap-1.5 px-3.5 py-1.5 rounded-full border ${
+              rangeActive ? "bg-brand-bg border-brand-bg" : "bg-white border-[#E8E6DF]"
+            }`}
+          >
+            <Feather
+              name="calendar"
+              size={12}
+              color={rangeActive ? "#fff" : "#5C5F68"}
+            />
+            <Text
+              className={`text-xs ${
+                rangeActive ? "text-white" : "text-brand-text-secondary"
+              }`}
+            >
+              {formatRangeLabel(dateRange)}
             </Text>
-          </View>
-        )}
+          </TouchableOpacity>
+          {rangeActive && (
+            <TouchableOpacity
+              onPress={() => handleApplyRange(ALL_TIME)}
+              className="w-7 h-7 rounded-full bg-white border border-[#E8E6DF] items-center justify-center"
+            >
+              <Feather name="x" size={13} color="#8A8D96" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {loading ? (
@@ -440,7 +528,7 @@ export default function TransactionsScreen() {
               <View className="bg-white rounded-2xl border border-[#E8E6DF] p-4 mb-4">
                 <View className="flex-row justify-between items-center mb-3">
                   <Text className="text-brand-bg text-xs font-medium">
-                    Daily income vs expense
+                    {chart.monthly ? "Monthly" : "Daily"} income vs expense
                   </Text>
                   <View className="flex-row gap-3">
                     <View className="flex-row items-center gap-1">
@@ -482,13 +570,24 @@ export default function TransactionsScreen() {
             <View className="items-center justify-center py-20">
               <Feather name="inbox" size={32} color="#BDC3C7" />
               <Text className="text-brand-text-muted text-sm mt-3">
-                {search ? "No matching transactions" : "No transactions yet"}
+                {search
+                  ? "No matching transactions"
+                  : rangeActive
+                  ? "No transactions in this range"
+                  : "No transactions yet"}
               </Text>
             </View>
           }
           />
         )}
 
+
+      <DateRangeSheet
+        visible={rangeSheetOpen}
+        value={dateRange}
+        onClose={() => setRangeSheetOpen(false)}
+        onApply={handleApplyRange}
+      />
 
       <EditTransactionModal
         visible={editingTx !== null}
