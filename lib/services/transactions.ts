@@ -26,8 +26,10 @@ export async function getTransactions(
 
     if (filters.type) query = query.eq("type", filters.type)
     if (filters.accountId) query = query.eq("account_id", filters.accountId)
+    if (filters.dateFrom) query = query.gte("date", filters.dateFrom)
+    if (filters.dateTo) query = query.lte("date", filters.dateTo)
 
-    const { data, error } = await query.order("date", { ascending: false })
+        const { data, error } = await query.order("date", { ascending: false })
 
     if (error) throw error
     return data as Transaction[]
@@ -60,15 +62,15 @@ export async function updateTransaction(
     transactionId: string,
     payload: UpdateTransactionPayload
 ) {
-    const {data, error} = await supabase
-    .from("transactions")
-    .update(payload)
-    .eq("id", transactionId)
-    .select()
-    .single()
+    const { data, error } = await supabase
+        .from("transactions")
+        .update(payload)
+        .eq("id", transactionId)
+        .select()
+        .single()
 
-    if (error) return {transaction: null, error}
-    return {transaction: data as Transaction, error: null}
+    if (error) return { transaction: null, error }
+    return { transaction: data as Transaction, error: null }
 }
 
 

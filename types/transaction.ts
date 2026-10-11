@@ -24,6 +24,9 @@ export type Transaction = {
 export type TransactionFilters = {
   type?: TransactionType | null;
   accountId?: string | null;
+
+  dateFrom?: string | null;
+  dateTo?: string | null;
 };
 
 export type NewTransaction = {
