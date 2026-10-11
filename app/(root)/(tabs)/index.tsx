@@ -293,6 +293,25 @@ export default function HomeScreen() {
             )}
           </TouchableOpacity>
 
+          <TouchableOpacity
+            onPress={() => router.push("/(root)/report")}
+            activeOpacity={0.85}
+            className="bg-white rounded-[18px] border border-[#E8E6DF] p-4 mb-[18px] flex-row items-center gap-3"
+          >
+            <View className="w-9 h-9 rounded-full bg-[#4A9EFF1A] items-center justify-center">
+              <Feather name="bar-chart-2" size={16} color="#4A9EFF" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-[#1A1D26] text-sm font-medium">
+                Monthly report
+              </Text>
+              <Text className="text-brand-text-secondary text-xs mt-0.5">
+                Compare spending with last month
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={16} color="#8A8D96" />
+          </TouchableOpacity>
+
           {expenseBreakedown.length > 0 && (
             <View className="bg-white rounded-[18px] border border-[#E8E6DF] p-4 mb-[18px]">
               <Text className="text-[#1A1D26] text-sm font-medium mb-3">
