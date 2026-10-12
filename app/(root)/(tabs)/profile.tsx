@@ -4,6 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { AccountModal } from "@/components/AccountModal";
 import { CurrencyPicker } from '@/components/CurrencyPicker'
+import { LanguagePicker } from '@/components/Languagepicker'
+import { LANGUAGES, type Language } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 import { useSetDefaultAccount  } from '@/hooks/mutation/useAccountMutations'
 import { useAccountsQuery } from '@/hooks/queries/useAccountsQuery'
 import { useSupabase } from '@/hooks/useSupabase'
@@ -15,6 +18,7 @@ import { Feather } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import * as ImagePicker from "expo-image-picker"
 import { useState } from 'react'
+ 
 
 
 const ACCOUNT_ICON: Record<AccountType, keyof typeof Feather.glyphMap> = {
@@ -79,14 +83,18 @@ export default function ProfileScreen() {
   const {signOut} = useAuth()
   const router = useRouter()
   const supabase = useSupabase()
+  const { t } = useTranslation()
   const currency = useUserStore((state) => state.currency)
   const setCurrency = useUserStore((state) => state.setCurrency)
   const biometricEnabled = useUserStore((state) => state.biometricEnabled)
   const setBiometricLock = useUserStore((state) => state.setBiometricLock)
+  const language = useUserStore((state) => state.language)
+  const setLanguage = useUserStore((state) => state.setLanguage)
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false);
+  const [languagePickerOpen, setLanguagePickerOpen] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const {
@@ -190,6 +198,15 @@ export default function ProfileScreen() {
     }
   }
 
+  const handleLanguageSelect = async (code: Language) => {
+    setLanguagePickerOpen(false)
+    try {
+      await setLanguage(code)
+    } catch {
+      Alert.alert(t("common.error"), t("language.updateFailed"))
+    }
+  }
+
   const handleCurrencySelect = async (selected: {code: string}) => {
     setCurrencyPickerOpen(false)
     if (!user) return
@@ -256,7 +273,7 @@ export default function ProfileScreen() {
 
 
       {/* Accounts */}
-      <SectionLabel>Accounnts</SectionLabel>
+      <SectionLabel>Accounts</SectionLabel>
       <View className="mx-5 rounded-2xl overflow-hidden border border-[#E8E6DF]">
           {loadingAccounts ? (
             <View className="bg-white px-4 py-5 items-center">
@@ -295,6 +312,12 @@ export default function ProfileScreen() {
       {/* Preferences */}
       <SectionLabel>Preferences</SectionLabel>
       <View className="mx-5 rounded-2xl overflow-hidden border border-[#E8E6DF]">
+        <Row
+        icon="globe"
+        label={t("profile.language")}
+        value={LANGUAGES.find((l) => l.code === language)?.label}
+        onPress={() => setLanguagePickerOpen(true)}
+        />
           <Row
             icon="dollar-sign"
             label="Currency"
@@ -338,6 +361,13 @@ export default function ProfileScreen() {
             onMadeDefault={handleMadeDefault}
             />
           )}
+
+          <LanguagePicker
+          visible={languagePickerOpen}
+          selected={language}
+          onSelect={handleLanguageSelect}
+          onClose={() => setLanguagePickerOpen(false)}
+          />
 
           <CurrencyPicker
           visible={currencyPickerOpen}
