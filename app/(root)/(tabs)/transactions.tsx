@@ -1,10 +1,27 @@
-import { TransactionRow } from "@/components/TransactionRow"
+import { DateRangeSheet } from "@/components/DateRangeSheet"
 import { EditTransactionModal } from "@/components/EditTransactionModal"
-import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery"
+import { TransactionRow } from "@/components/TransactionRow"
 import { useDeleteTransactions, useDeleteTransactionsBulk } from "@/hooks/mutation/useTransactionMutations"
+import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery"
+import { useTransactionsQuery } from "@/hooks/queries/useTransactionsQuery"
 import { Transaction, TransactionType } from "@/lib/services/transactions"
+import {
+  ALL_TIME,
+  DateRange,
+  formatRangeLabel,
+  toFilterDates,
+} from "@/lib/utils/dateRange"
 import { exportTransactionsToCsv } from "@/lib/utils/exportTransactions"
+import { ListTransaction, mergeTransferLegs } from "@/lib/utils/transfer"
 import { Feather } from "@expo/vector-icons"
+import {
+  differenceInCalendarDays,
+  eachDayOfInterval,
+  eachMonthOfInterval,
+  format,
+  startOfDay,
+  startOfMonth,
+} from "date-fns"
 import { useRouter } from "expo-router"
 import { useCallback, useMemo, useState } from "react"
 import {
@@ -19,24 +36,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native"
-import {
-  differenceInCalendarDays,
-  eachDayOfInterval,
-  eachMonthOfInterval,
-  format,
-  startOfDay,
-  startOfMonth,
-} from "date-fns"
 import { BarChart } from "react-native-gifted-charts"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { useTransactionsQuery } from "@/hooks/queries/useTransactionsQuery"
-import { DateRangeSheet } from "@/components/DateRangeSheet"
-import {
-  ALL_TIME,
-  DateRange,
-  formatRangeLabel,
-  toFilterDates,
-} from "@/lib/utils/dateRange"
 
 
 const FILTERS = ["ALL", "Income", "Expense"] as const
@@ -144,15 +145,23 @@ export default function TransactionsScreen() {
     refetchAccounts()
   }
 
+  // Dua sisi satu transfer digabung jadi satu baris untuk daftar.
+  const listItems = useMemo(
+    () => mergeTransferLegs(transactions, accounts),
+    [transactions, accounts]
+  )
+
   const filterTransactions = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return transactions
-    return transactions.filter(
+    if (!q) return listItems
+    return listItems.filter(
       (tx) =>
         tx.description?.toLowerCase().includes(q) ||
-      tx.category.toLowerCase().includes(q)
+        tx.category.toLowerCase().includes(q) ||
+        tx.transfer?.fromName.toLowerCase().includes(q) ||
+        tx.transfer?.toName.toLowerCase().includes(q)
     )
-  }, [transactions, search])
+  }, [listItems, search])
 
   const chart = useMemo(() => buildChartBuckets(dateRange), [dateRange])
 
@@ -210,9 +219,12 @@ export default function TransactionsScreen() {
   // Takes the tx as an argument instead of being wrapped per-item.
   const handelDelete = useCallback(
     (tx: Transaction) => {
+      const transferId = (tx as Transaction & { transfer_id?: string | null }).transfer_id
       Alert.alert(
         "Delete transaction",
-        "Are you sure you want to delete this transaction?",
+        transferId
+          ? "This will delete the transfer and restore the balance of both accounts."
+          : "Are you sure you want to delete this transaction?",
         [
           { text: "Cancel", style: "cancel" },
           {
@@ -271,12 +283,17 @@ export default function TransactionsScreen() {
   const handleDeleteSelected = useCallback(() => {
     const selected = transactions.filter((tx) => selectedIds.has(tx.id))
     if (selected.length === 0) return
+    const hasTransfer = selected.some(
+      (tx) => (tx as Transaction & { transfer_id?: string | null }).transfer_id
+    )
 
     Alert.alert(
       "Delete transactions",
       `Delete ${selected.length} selected transaction${
         selected.length > 1 ? "s" : ""
-      }? This can't be undone.`,
+      }? This can't be undone.${
+        hasTransfer ? " Selected transfers are removed from both accounts." : ""
+      }`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -298,7 +315,7 @@ export default function TransactionsScreen() {
   // Stable renderItem reference so FlatList doesn't treat every parent
   // re-render (typing in search, toggling filters, selecting rows) as a
   // reason to re-create and re-render every visible row.
-  const renderItem: ListRenderItem<Transaction> = useCallback(
+  const renderItem: ListRenderItem<ListTransaction> = useCallback(
     ({ item }) => (
       <TransactionRow
         tx={item}

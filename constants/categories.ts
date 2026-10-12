@@ -128,6 +128,14 @@ export const CATEGORIES = {
     color: "#8E44AD",
     type: "INCOME",
   },
+
+  // ── TRANSFER (khusus transfer antar akun, tidak muncul di form) ──
+  transfer: {
+    label: "Transfer",
+    icon: "🔁",
+    color: "#7F8C8D",
+    type: "TRANSFER",
+  },
 } as const;
 
 // ── DERIVED HELPERS ───────────────────────────────────────────

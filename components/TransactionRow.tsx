@@ -1,5 +1,6 @@
 import { getCategoryConfig } from "@/constants/categories";
 import { Transaction } from "@/lib/services/transactions";
+import { isTransfer, ListTransaction } from "@/lib/utils/transfer";
 import { formatPrice } from "@/lib/utils";
 import { Feather } from "@expo/vector-icons";
 import { memo } from "react";
@@ -70,7 +71,7 @@ function TransactionRowComponent({
     onToggleSelect,
     onEdit,
 }: {
-    tx: Transaction;
+    tx: ListTransaction;
     // Dipanggil dari tombol Edit yang muncul saat baris digeser ke kiri.
     onEdit?: (tx: Transaction) => void
     // now receives the transaction, so the parent can pass a single
@@ -86,7 +87,9 @@ function TransactionRowComponent({
     onToggleSelect?: (tx: Transaction) => void
 }) {
     const config = getCategoryConfig(tx.category)
-    const isIncome = tx.type === "INCOME"
+    const transfer = isTransfer(tx)
+    // Transfer: TRANSFER_IN bertanda +, TRANSFER_OUT bertanda -, warna netral.
+    const isIncome = tx.type === "INCOME" || tx.type === "TRANSFER_IN"
     const currency = useUserStore((state) => state.currency)
 
     const row = (
@@ -121,7 +124,9 @@ function TransactionRowComponent({
 
       <View className="flex-1">
         <Text className="text-brand-bg text-sm font-medium" numberOfLines={1}>
-          {tx.description || config.label}
+          {tx.transfer
+            ? `${tx.transfer.fromName} → ${tx.transfer.toName}`
+            : tx.description || config.label}
         </Text>
         <View className="flex-row items-center gap-1.5 mt-0.5">
           <Feather
@@ -148,15 +153,19 @@ function TransactionRowComponent({
 
       <Text
         className={`text-sm font-medium ${
-          isIncome ? "text-brand-success" : "text-brand-coral"
+          transfer
+            ? "text-[#7F8C8D]"
+            : isIncome
+            ? "text-brand-success"
+            : "text-brand-coral"
         }`}
       >
-        {isIncome ? "+" : "-"}
+        {tx.transfer ? "" : isIncome ? "+" : "-"}
         {formatPrice(tx.amount, currency)}
       </Text>
 
       {/* Petunjuk visual: baris ini bisa digeser ke kiri */}
-      {(onEdit || onDelete) && (
+      {((onEdit && !transfer) || onDelete) && (
         <Feather
           name="chevron-left"
           size={14}
@@ -204,7 +213,7 @@ function TransactionRowComponent({
           <SwipeActions
             progress={progress}
             onEdit={
-              onEdit
+              onEdit && !transfer
                 ? () => {
                     swipeable.close()
                     onEdit(tx)

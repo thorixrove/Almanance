@@ -58,6 +58,8 @@ export function EditTransactionModal({
   // Isi ulang form setiap kali modal dibuka untuk transaksi tertentu.
   useEffect(() => {
     if (visible && transaction) {
+      // Baris transfer tidak boleh diedit di sini (akan memutus pasangannya).
+      if (transaction.type === "TRANSFER_IN" || transaction.type === "TRANSFER_OUT") return
       setType(transaction.type)
       setAmount(amountToInput(transaction.amount))
       setCategory(transaction.category)
