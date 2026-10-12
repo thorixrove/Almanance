@@ -41,7 +41,7 @@ export function DateRangeSheet({
             return
         }
         onApply(getPresetRange(preset))
-        onClose
+        onClose()
     }
 
     const handleApplyCustom = () => {

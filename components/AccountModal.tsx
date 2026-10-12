@@ -90,7 +90,7 @@ const handelDelete = async () => {
                 onPress: async () => {
                     try {
                         await deleteAccount({ accountId: accounts.id, force: true})
-                        onDeleted
+                        onDeleted()
                     } catch {
                         Alert.alert("Error", "Couldn't delete the account")
                     }
