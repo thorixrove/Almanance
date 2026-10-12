@@ -42,7 +42,7 @@ function getGreeting() {
 const QUICK_ACTIONS = [
   {
     icon: "camera",
-    label: "AI Receipt Scan",
+    label: "AI Scan",
     action: "scan",
     color: "#1A85FF",
   },
@@ -54,7 +54,7 @@ const QUICK_ACTIONS = [
   },
   {
     icon: "plus",
-    label: "Add Manually",
+    label: "Manually",
     action: "manual",
     color: "#3DDC84",
   },
