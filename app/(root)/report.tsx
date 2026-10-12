@@ -4,15 +4,28 @@ import { formatPrice } from "@/lib/utils"
 import { useUserStore } from "@/store/useStore"
 import type { CategoryComparison, ReportDelta } from "@/types"
 import { Feather } from "@expo/vector-icons"
-import { addMonths, format, isSameMonth, startOfMonth, subMonths } from "date-fns"
+import {
+  addMonths,
+  differenceInCalendarMonths,
+  format,
+  isSameMonth,
+  startOfMonth,
+  subMonths,
+} from "date-fns"
 import { useRouter } from "expo-router"
-import { useState } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import {
   ActivityIndicator,
+  FlatList,
+  Modal,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
   RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -101,17 +114,236 @@ function CategoryRow({
   )
 }
 
-export default function ReportScreen() {
-  const router = useRouter()
-  const currency = useUserStore((s) => s.currency)
-  const [month, setMonth] = useState(() => startOfMonth(new Date()))
+const MONTHS_BACK = 59 // jangkauan geser: 5 tahun ke belakang sampai bulan ini
 
+/** Satu halaman laporan untuk satu bulan. */
+function MonthPage({
+  month,
+  width,
+  currency,
+}: {
+  month: Date
+  width: number
+  currency: string
+}) {
   const { report, isLoading, isError, isRefetching, refetch } =
     useMonthlyReportQuery(month)
 
   const isCurrentMonth = isSameMonth(month, new Date())
   const previousMonth = subMonths(month, 1)
   const maxValue = Math.max(1, ...report.categories.map((c) => c.current))
+
+  return (
+    <ScrollView
+      style={{ width }}
+      contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
+      refreshControl={
+        <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+      }
+    >
+      {isLoading ? (
+        <View className="py-16 items-center">
+          <ActivityIndicator color="#1A1D26" />
+        </View>
+      ) : isError ? (
+        <View className="py-16 items-center">
+          <Text className="text-brand-text-secondary text-sm mb-3">
+            Couldn't load the report.
+          </Text>
+          <TouchableOpacity
+            onPress={() => refetch()}
+            className="bg-brand-bg rounded-xl px-5 py-3"
+          >
+            <Text className="text-white text-sm font-semibold">Try again</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+          {/* Total */}
+          <View className="bg-brand-bg rounded-[20px] p-5 mt-2 mb-4">
+            <Text className="text-brand-text-secondary text-xs mb-1.5">
+              Total spending
+            </Text>
+            <Text className="text-brand-text-primary text-[32px] font-medium tracking-tight">
+              {formatPrice(report.total.current, currency)}
+            </Text>
+            <View className="flex-row items-center gap-2 mt-3">
+              <DeltaBadge delta={report.total} />
+              <Text className="text-brand-text-secondary text-xs flex-1">
+                vs {formatPrice(report.total.previous, currency)} in{" "}
+                {format(previousMonth, "MMM yyyy")}
+              </Text>
+            </View>
+            {isCurrentMonth && (
+              <Text className="text-brand-text-secondary text-[11px] mt-3">
+                This month is still in progress, compared with the full
+                previous month.
+              </Text>
+            )}
+          </View>
+
+          {/* Per kategori */}
+          <View className="bg-white rounded-[18px] border border-[#E8E6DF] px-4 pt-4 pb-1">
+            <Text className="text-brand-bg text-sm font-medium">
+              By category
+            </Text>
+
+            {report.categories.length === 0 ? (
+              <Text className="text-brand-text-secondary text-xs py-6 text-center">
+                No expenses in this period.
+              </Text>
+            ) : (
+              report.categories.map((item, index) => (
+                <CategoryRow
+                  key={item.category}
+                  item={item}
+                  maxValue={maxValue}
+                  currency={currency}
+                  isLast={index === report.categories.length - 1}
+                />
+              ))
+            )}
+          </View>
+        </>
+      )}
+    </ScrollView>
+  )
+}
+
+/** Pemilih bulan: ganti tahun lalu pilih bulan, bisa lompat ke bulan mana pun. */
+function MonthPickerModal({
+  visible,
+  selected,
+  minMonth,
+  maxMonth,
+  onSelect,
+  onClose,
+}: {
+  visible: boolean
+  selected: Date
+  minMonth: Date
+  maxMonth: Date
+  onSelect: (month: Date) => void
+  onClose: () => void
+}) {
+  const [year, setYear] = useState(selected.getFullYear())
+  const minYear = minMonth.getFullYear()
+  const maxYear = maxMonth.getFullYear()
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onShow={() => setYear(selected.getFullYear())}
+      onRequestClose={onClose}
+    >
+      <Pressable
+        className="flex-1 justify-center px-6"
+        style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+        onPress={onClose}
+      >
+        {/* Pressable kosong agar tap di dalam kartu tidak menutup modal */}
+        <Pressable className="bg-white rounded-[20px] p-5" onPress={() => {}}>
+          <View className="flex-row items-center justify-between mb-4">
+            <TouchableOpacity
+              onPress={() => setYear((y) => y - 1)}
+              disabled={year <= minYear}
+              hitSlop={8}
+              className="w-9 h-9 rounded-full border border-[#E8E6DF] items-center justify-center"
+              style={{ opacity: year <= minYear ? 0.35 : 1 }}
+            >
+              <Feather name="chevron-left" size={18} color="#1A1D26" />
+            </TouchableOpacity>
+            <Text className="text-brand-bg text-base font-medium">{year}</Text>
+            <TouchableOpacity
+              onPress={() => setYear((y) => y + 1)}
+              disabled={year >= maxYear}
+              hitSlop={8}
+              className="w-9 h-9 rounded-full border border-[#E8E6DF] items-center justify-center"
+              style={{ opacity: year >= maxYear ? 0.35 : 1 }}
+            >
+              <Feather name="chevron-right" size={18} color="#1A1D26" />
+            </TouchableOpacity>
+          </View>
+
+          <View className="flex-row flex-wrap">
+            {Array.from({ length: 12 }, (_, m) => {
+              const date = new Date(year, m, 1)
+              const disabled = date < minMonth || date > maxMonth
+              const active = isSameMonth(date, selected)
+              return (
+                <View key={m} className="w-1/3 p-1">
+                  <TouchableOpacity
+                    disabled={disabled}
+                    onPress={() => onSelect(date)}
+                    className={`py-3 rounded-xl items-center border ${
+                      active
+                        ? "bg-brand-bg border-brand-bg"
+                        : "bg-white border-[#E8E6DF]"
+                    }`}
+                    style={{ opacity: disabled ? 0.3 : 1 }}
+                  >
+                    <Text
+                      className={`text-sm font-medium ${
+                        active ? "text-white" : "text-brand-bg"
+                      }`}
+                    >
+                      {format(date, "MMM")}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )
+            })}
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  )
+}
+
+export default function ReportScreen() {
+  const router = useRouter()
+  const currency = useUserStore((s) => s.currency)
+  const { width } = useWindowDimensions()
+
+  const maxMonth = useMemo(() => startOfMonth(new Date()), [])
+  const minMonth = useMemo(
+    () => subMonths(maxMonth, MONTHS_BACK),
+    [maxMonth]
+  )
+  // urut dari terlama (kiri) ke terbaru (kanan)
+  const months = useMemo(
+    () => Array.from({ length: MONTHS_BACK + 1 }, (_, i) => addMonths(minMonth, i)),
+    [minMonth]
+  )
+
+  const lastIndex = months.length - 1
+  const [index, setIndex] = useState(lastIndex)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const listRef = useRef<FlatList<Date>>(null)
+
+  const month = months[index]
+  const canGoBack = index > 0
+  const canGoForward = index < lastIndex
+
+  const onMomentumEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const next = Math.round(e.nativeEvent.contentOffset.x / width)
+      setIndex(Math.min(Math.max(next, 0), lastIndex))
+    },
+    [width, lastIndex]
+  )
+
+  const jumpTo = (target: Date) => {
+    const next = Math.min(
+      Math.max(differenceInCalendarMonths(target, minMonth), 0),
+      lastIndex
+    )
+    setPickerOpen(false)
+    setIndex(next)
+    listRef.current?.scrollToIndex({ index: next, animated: false })
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-brand-body" edges={["top", "bottom"]}>
@@ -127,106 +359,64 @@ export default function ReportScreen() {
         <Text className="text-brand-bg text-lg font-medium">Monthly report</Text>
       </View>
 
-      {/* Bulan terpilih */}
-      <View className="mx-5 mb-1 bg-white rounded-xl border border-[#E8E6DF] py-3 items-center">
-        <Text className="text-brand-bg text-sm font-medium">
-          {format(month, "MMMM yyyy")}
-        </Text>
-      </View>
-
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
-        }
+      {/* Bulan terpilih: tap untuk lompat ke bulan mana pun */}
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => setPickerOpen(true)}
+        className="mx-5 bg-white rounded-xl border border-[#E8E6DF] py-3 px-4 flex-row items-center justify-between"
       >
-        {isLoading ? (
-          <View className="py-16 items-center">
-            <ActivityIndicator color="#1A1D26" />
-          </View>
-        ) : isError ? (
-          <View className="py-16 items-center">
-            <Text className="text-brand-text-secondary text-sm mb-3">
-              Couldn't load the report.
-            </Text>
-            <TouchableOpacity
-              onPress={() => refetch()}
-              className="bg-brand-bg rounded-xl px-5 py-3"
-            >
-              <Text className="text-white text-sm font-semibold">Try again</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <>
-            {/* Total */}
-            <View className="bg-brand-bg rounded-[20px] p-5 mt-2 mb-4">
-              <Text className="text-brand-text-secondary text-xs mb-1.5">
-                Total spending
-              </Text>
-              <Text className="text-brand-text-primary text-[32px] font-medium tracking-tight">
-                {formatPrice(report.total.current, currency)}
-              </Text>
-              <View className="flex-row items-center gap-2 mt-3">
-                <DeltaBadge delta={report.total} />
-                <Text className="text-brand-text-secondary text-xs flex-1">
-                  vs {formatPrice(report.total.previous, currency)} in{" "}
-                  {format(previousMonth, "MMM yyyy")}
-                </Text>
-              </View>
-              {isCurrentMonth && (
-                <Text className="text-brand-text-secondary text-[11px] mt-3">
-                  This month is still in progress, compared with the full
-                  previous month.
-                </Text>
-              )}
-            </View>
-
-            {/* Per kategori */}
-            <View className="bg-white rounded-[18px] border border-[#E8E6DF] px-4 pt-4 pb-1">
-              <Text className="text-brand-bg text-sm font-medium">
-                By category
-              </Text>
-
-              {report.categories.length === 0 ? (
-                <Text className="text-brand-text-secondary text-xs py-6 text-center">
-                  No expenses in this period.
-                </Text>
-              ) : (
-                report.categories.map((item, index) => (
-                  <CategoryRow
-                    key={item.category}
-                    item={item}
-                    maxValue={maxValue}
-                    currency={currency}
-                    isLast={index === report.categories.length - 1}
-                  />
-                ))
-              )}
-            </View>
-          </>
-        )}
-
-        {/* Pindah bulan */}
-        <View className="flex-row items-center justify-between mt-5">
-          <TouchableOpacity
-            onPress={() => setMonth((m) => subMonths(m, 1))}
-            hitSlop={8}
-            className="w-11 h-11 rounded-full bg-white border border-[#E8E6DF] items-center justify-center"
-          >
-            <Feather name="chevron-left" size={18} color="#1A1D26" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setMonth((m) => addMonths(m, 1))}
-            disabled={isCurrentMonth}
-            hitSlop={8}
-            className="w-11 h-11 rounded-full bg-white border border-[#E8E6DF] items-center justify-center"
-            style={{ opacity: isCurrentMonth ? 0.35 : 1 }}
-          >
-            <Feather name="chevron-right" size={18} color="#1A1D26" />
-          </TouchableOpacity>
+        {/* Panah di tepi = penanda halaman bisa digeser */}
+        <Feather
+          name="chevron-left"
+          size={16}
+          color="#8A8D96"
+          style={{ opacity: canGoBack ? 1 : 0.2 }}
+        />
+        <View className="flex-row items-center gap-1.5">
+          <Text className="text-brand-bg text-sm font-medium">
+            {format(month, "MMMM yyyy")}
+          </Text>
+          <Feather name="chevron-down" size={14} color="#8A8D96" />
         </View>
-      </ScrollView>
+        <Feather
+          name="chevron-right"
+          size={16}
+          color="#8A8D96"
+          style={{ opacity: canGoForward ? 1 : 0.2 }}
+        />
+      </TouchableOpacity>
+      <Text className="text-brand-text-secondary text-[11px] text-center mt-1.5">
+        Swipe left or right to change month
+      </Text>
+
+      <FlatList
+        ref={listRef}
+        className="flex-1"
+        data={months}
+        keyExtractor={(m) => m.toISOString()}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        initialScrollIndex={lastIndex}
+        getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
+        onMomentumScrollEnd={onMomentumEnd}
+        windowSize={3}
+        initialNumToRender={1}
+        maxToRenderPerBatch={1}
+        removeClippedSubviews
+        renderItem={({ item }) => (
+          <MonthPage month={item} width={width} currency={currency} />
+        )}
+      />
+
+      <MonthPickerModal
+        visible={pickerOpen}
+        selected={month}
+        minMonth={minMonth}
+        maxMonth={maxMonth}
+        onSelect={jumpTo}
+        onClose={() => setPickerOpen(false)}
+      />
     </SafeAreaView>
   )
 }

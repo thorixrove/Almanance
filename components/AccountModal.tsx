@@ -1,7 +1,7 @@
 import { useCreateAccount, useDeleteAccount,  useUpdateAccount } from "@/hooks/mutation/useAccountMutations";
 import { Account, AccountType} from "@/lib/services/accounts"
 import { COLORS } from "@/constants/theme";
-import { FormSheetModal } from "./FormSheetModal";
+import { BottomSheet } from "./BottomSheet";
 import { useEffect, useState } from "react";
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 
@@ -90,7 +90,7 @@ const handelDelete = async () => {
                 onPress: async () => {
                     try {
                         await deleteAccount({ accountId: accounts.id, force: true})
-                        onDeleted
+                        onDeleted()
                     } catch {
                         Alert.alert("Error", "Couldn't delete the account")
                     }
@@ -104,7 +104,7 @@ const handelDelete = async () => {
 }
 
 return(
-     <FormSheetModal
+     <BottomSheet
       visible={visible}
       title={isEditing ? "Edit account" : "Add account"}
       onClose={onClose}
@@ -171,6 +171,6 @@ return(
           </Text>
         </TouchableOpacity>
       )}
-    </FormSheetModal>
+    </BottomSheet>
 )
 }
