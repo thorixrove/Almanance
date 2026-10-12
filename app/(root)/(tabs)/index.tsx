@@ -1,5 +1,7 @@
 import { BudgetModal } from "@/components/BudgetModal";
 import { TransactionRow } from "@/components/TransactionRow";
+import { TransferSheet } from "@/components/TransferSheet";
+import { mergeTransferLegs } from "@/lib/utils/transfer";
 import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery"
 import { useBudgetQuery } from "@/hooks/queries/useBudgetQuery"
 import { useTransactionsQuery } from "@/hooks/queries/useTransactionsQuery"
@@ -56,6 +58,12 @@ const QUICK_ACTIONS = [
     action: "manual",
     color: "#3DDC84",
   },
+  {
+    icon: "repeat",
+    label: "Transfer",
+    action: "transfer",
+    color: "#A29BFE",
+  },
 ] as const;
 
 
@@ -65,6 +73,7 @@ export default function HomeScreen() {
   const currency = useUserStore((s) => s.currency)
 
   const [budgetModalOpen, setBudgetModalOpen] = useState(false)
+  const [transferOpen, setTransferOpen] = useState(false)
 
   const {
     data: accounts = [],
@@ -121,8 +130,8 @@ export default function HomeScreen() {
   )
 
   const recentTransactions = useMemo(
-    () => transactions.slice(0, 5),
-    [transactions]
+    () => mergeTransferLegs(transactions, accounts).slice(0, 5),
+    [transactions, accounts]
   )
 
   const expenseBreakedown = useMemo(() => {
@@ -213,10 +222,12 @@ export default function HomeScreen() {
               <TouchableOpacity
                 key={action.label}
                 onPress={() =>
-                  router.push({
-                    pathname: "/(root)/(tabs)/add-transaction",
-                    params: { action: action.action },
-                  })
+                  action.action === "transfer"
+                    ? setTransferOpen(true)
+                    : router.push({
+                        pathname: "/(root)/(tabs)/add-transaction",
+                        params: { action: action.action },
+                      })
                 }
                 activeOpacity={0.75}
                 className="flex-1 bg-brand-surface rounded-2xl border border-brand-surface-border py-4 items-center gap-2"
@@ -388,6 +399,14 @@ export default function HomeScreen() {
           budget={budgets}
           onClose={() => setBudgetModalOpen(false)}
           onSaved={() => setBudgetModalOpen(false)}
+        />
+      )}
+
+      {user && (
+        <TransferSheet
+          visible={transferOpen}
+          onClose={() => setTransferOpen(false)}
+          onSaved={() => setTransferOpen(false)}
         />
       )}
     </SafeAreaView>

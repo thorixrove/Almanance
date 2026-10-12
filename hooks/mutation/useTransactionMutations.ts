@@ -1,4 +1,3 @@
-import { useSupabase } from "../useSupabase";
 import {
     createTransaction,
     deleteTransaction,
@@ -10,7 +9,14 @@ import {
     UpdateTransactionPayload,
 } from "@/lib/services/transactions";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { string } from "zod";
+import { useSupabase } from "../useSupabase";
+
+type TransactionDeleteInput = Pick<
+    Transaction,
+    "id" | "account_id" | "amount" | "type"
+> & {
+    transfer_id?: string | null;
+};
 
 export function useCreateTransactions() {
     const supabase = useSupabase()
@@ -25,7 +31,6 @@ export function useCreateTransactions() {
         },
     })
 }
-
 
 export function useUpdateTransaction() {
     const supabase = useSupabase()
@@ -52,30 +57,32 @@ export function useDeleteTransactions() {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: (tx: Pick<Transaction,  "id" | "account_id" | "amount" | "type">) =>
-            deleteTransaction(supabase,
+        mutationFn: (tx: TransactionDeleteInput) => {
+            const transferId = typeof tx.transfer_id === "string" ? tx.transfer_id : null
+
+            return deleteTransaction(
+                supabase,
                 tx.id,
                 tx.account_id,
                 tx.amount,
-                tx.type as TransactionType
-            ),
-            onSuccess: (result) => {
-                if (result.error) return
-                queryClient.invalidateQueries({ queryKey: ["transactions"]})
-                queryClient.invalidateQueries({ queryKey: ["accounts"]})
-            },
+                tx.type as TransactionType,
+                transferId
+            )
+        },
+        onSuccess: (result) => {
+            if (result.error) return
+            queryClient.invalidateQueries({ queryKey: ["transactions"] })
+            queryClient.invalidateQueries({ queryKey: ["accounts"] })
+        },
     })
 }
-
 
 export function useDeleteTransactionsBulk() {
     const supabase = useSupabase()
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: (
-            txs: Pick<Transaction, "id" | "account_id" | "amount" | "type">[]
-        ) => deleteTransactions(supabase, txs),
+        mutationFn: (txs: TransactionDeleteInput[]) => deleteTransactions(supabase, txs),
         onSuccess: (result) => {
             if (result.error) return
             queryClient.invalidateQueries({ queryKey: ["transactions"] })

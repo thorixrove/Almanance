@@ -12,8 +12,8 @@ export type {
     NewTransaction,
     Transaction,
     TransactionFilters,
-    TransactionType,
-} from "@/types/transaction"
+    TransactionType
+} from "@/types/transaction";
 
 
 
@@ -80,28 +80,50 @@ export async function deleteTransaction(
     transactionId: string,
     _accountId?: string,
     _amount?: number,
-    _type?: TransactionType
+    _type?: TransactionType,
+    transferId?: string | null
 ) {
-    const { error } = await supabase
-        .from("transactions")
-        .delete()
-        .eq("id", transactionId)
+    const query = supabase.from("transactions").delete()
+
+    // Baris transfer selalu dihapus berpasangan (trigger mengembalikan kedua saldo).
+    const { error } = transferId
+        ? await query.eq("transfer_id", transferId)
+        : await query.eq("id", transactionId)
 
     return { error }
 }
 
+type DeleteTransactionItem = Pick<
+    Transaction,
+    "id" | "account_id" | "amount" | "type"
+> & {
+    transfer_id?: string | null
+}
+
 export async function deleteTransactions(
     supabase: SupabaseClient,
-    transactions: Pick<Transaction, "id" | "account_id" | "amount" | "type">[]
+    transactions: DeleteTransactionItem[]
 ) {
     if (transactions.length === 0) return { error: null }
 
     const ids = transactions.map((tx) => tx.id)
+    const transferIds = [
+        ...new Set(
+            transactions
+                .map((tx) => tx.transfer_id)
+                .filter((id): id is string => !!id)
+        ),
+    ]
 
-    const { error } = await supabase
-        .from("transactions")
-        .delete()
-        .in("id", ids)
+    const query = supabase.from("transactions").delete()
+
+    // Kalau ada baris transfer di pilihan, pasangannya ikut dihapus.
+    const { error } =
+        transferIds.length > 0
+            ? await query.or(
+                  `id.in.(${ids.join(",")}),transfer_id.in.(${transferIds.join(",")})`
+              )
+            : await query.in("id", ids)
 
     return { error }
 }

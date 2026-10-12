@@ -49,7 +49,10 @@ function summarize(transactions: Transaction[]): Totals {
       totals.expense += tx.amount;
       totals.byCategory[tx.category] =
         (totals.byCategory[tx.category] ?? 0) + tx.amount;
-    } else if (tx.description !== STARTING_BALANCE_DESCRIPTION) {
+    } else if (
+      tx.type === "INCOME" &&
+      tx.description !== STARTING_BALANCE_DESCRIPTION
+    ) {
       totals.income += tx.amount;
     }
   });

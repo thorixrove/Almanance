@@ -1,13 +1,17 @@
 import type { CategoryKey } from "@/constants/categories";
 
 export type TransactionType = "INCOME" | "EXPENSE";
+
+export type TransferType = "TRANSFER_IN" | "TRANSFER_OUT";
+
+export type StoredTransactionType = TransactionType | TransferType;
 export type InputMethod = "MANUAL" | "RECEIPT_SCAN" | "VOICE";
 
 export type Transaction = {
   id: string;
   user_id: string;
   account_id: string;
-  type: TransactionType;
+  type: StoredTransactionType;
   amount: number;
   category: CategoryKey;
   description: string | null;
