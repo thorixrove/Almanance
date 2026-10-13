@@ -13,6 +13,7 @@ import { Feather } from "@expo/vector-icons"
 import { isSameMonth } from "date-fns"
 import { Image } from "expo-image"
 import { useRouter } from "expo-router"
+import { useTranslation } from "react-i18next"
 import { useMemo, useState } from "react"
 import {
   ActivityIndicator,
@@ -24,7 +25,7 @@ import {
 } from "react-native";
 import { PieChart } from "react-native-gifted-charts"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { getCategoryConfig } from "@/constants/categories"
+import { getCategoryConfig, getCategoryLabel } from "@/constants/categories"
 
 
 
@@ -32,35 +33,35 @@ import { getCategoryConfig } from "@/constants/categories"
 // jadi tidak ikut dihitung di ringkasan pemasukan bulan ini.
 const STARTING_BALANCE_DESCRIPTION = "Starting balance"
 
-function getGreeting() {
+function getGreetingKey() {
   const hour = new Date().getHours()
-  if (hour < 12) return "Good Morning"
-  if (hour < 18) return "Good Afternoon"
-  return "Good evening"
+  if (hour < 12) return "home.greetingMorning"
+  if (hour < 18) return "home.greetingAfternoon"
+  return "home.greetingEvening"
 }
 
 const QUICK_ACTIONS = [
   {
     icon: "camera",
-    label: "AI Scan",
+    labelKey: "home.quickScan",
     action: "scan",
     color: "#1A85FF",
   },
   {
     icon: "mic",
-    label: "Voice Entry",
+    labelKey: "home.quickVoice",
     action: "voice",
     color: "#FF6B4A",
   },
   {
     icon: "plus",
-    label: "Manually",
+    labelKey: "home.quickManual",
     action: "manual",
     color: "#3DDC84",
   },
   {
     icon: "repeat",
-    label: "Transfer",
+    labelKey: "home.quickTransfer",
     action: "transfer",
     color: "#A29BFE",
   },
@@ -69,6 +70,7 @@ const QUICK_ACTIONS = [
 
 export default function HomeScreen() {
   const { user } = useUser()
+  const { t } = useTranslation()
   const router = useRouter()
   const currency = useUserStore((s) => s.currency)
 
@@ -171,10 +173,10 @@ export default function HomeScreen() {
             <View className="flex-row items-center gap-2.5">
               <View className="items-end">
                 <Text className="text-brand-text-secondary text-xs">
-                  {getGreeting()}
+                  {t(getGreetingKey())}
                 </Text>
                 <Text className="text-brand-text-primary text-base font-medium">
-                  {user?.firstName ?? "there"}
+                  {user?.firstName ?? t("home.guestName")}
                 </Text>
               </View>
               <TouchableOpacity
@@ -196,7 +198,7 @@ export default function HomeScreen() {
 
           <View className="mb-[22px]">
             <Text className="text-brand-text-secondary text-xs mb-1.5">
-              Total balance
+              {t("home.totalBalance")}
             </Text>
             <Text className="text-brand-text-primary text-[38px] font-medium tracking-tight">
               {formatPrice(totalBalance, currency)}
@@ -220,14 +222,14 @@ export default function HomeScreen() {
           <View className="flex-row gap-2.5">
             {QUICK_ACTIONS.map((action) => (
               <TouchableOpacity
-                key={action.label}
+                key={action.action}
                 onPress={() =>
                   action.action === "transfer"
                     ? setTransferOpen(true)
                     : router.push({
-                        pathname: "/(root)/(tabs)/add-transaction",
-                        params: { action: action.action },
-                      })
+                      pathname: "/(root)/(tabs)/add-transaction",
+                      params: { action: action.action },
+                    })
                 }
                 activeOpacity={0.75}
                 className="flex-1 bg-brand-surface rounded-2xl border border-brand-surface-border py-4 items-center gap-2"
@@ -239,7 +241,7 @@ export default function HomeScreen() {
                   <Feather name={action.icon} size={17} color={action.color} />
                 </View>
                 <Text className="text-[#B8BAC2] text-[11px] font-medium text-center">
-                  {action.label}
+                  {t(action.labelKey)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -256,7 +258,7 @@ export default function HomeScreen() {
               <View className="w-[7px] h-[7px] rounded-full bg-brand-blue" />
             </View>
             <Text className="text-brand-text-muted text-[13px] flex-1">
-              Ask AI anything about your money
+              {t("home.askAi")}
             </Text>
             <Feather name="arrow-right" size={16} color="#4A9EFF" />
           </TouchableOpacity>
@@ -268,7 +270,7 @@ export default function HomeScreen() {
           >
             <View className="flex-row items-center justify-between mb-2.5">
               <Text className="text-[#1A1D26] text-sm font-medium">
-                Monthly budget
+                {t("home.monthlyBudget")}
               </Text>
               <Feather name="edit-2" size={13} color="#8A8D96" />
             </View>
@@ -276,8 +278,10 @@ export default function HomeScreen() {
             {budgets ? (
               <>
                 <Text className="text-brand-text-secondary text-xs mb-2">
-                  {formatPrice(monthExpense, currency)} of{" "}
-                  {formatPrice(budgets.amount, currency)} spent
+                  {t("home.budgetSpent", {
+                    spent: formatPrice(monthExpense, currency),
+                    total: formatPrice(budgets.amount, currency),
+                  })}
                 </Text>
                 <View className="h-2 rounded-full bg-[#F0EEE7] overflow-hidden">
                   <View
@@ -299,7 +303,7 @@ export default function HomeScreen() {
               </>
             ) : (
               <Text className="text-brand-text-secondary text-xs">
-                Tap to set a monthly spending budget
+                {t("home.setBudgetHint")}
               </Text>
             )}
           </TouchableOpacity>
@@ -314,10 +318,10 @@ export default function HomeScreen() {
             </View>
             <View className="flex-1">
               <Text className="text-[#1A1D26] text-sm font-medium">
-                Monthly report
+                {t("home.monthlyReport")}
               </Text>
               <Text className="text-brand-text-secondary text-xs mt-0.5">
-                Compare spending with last month
+                {t("home.reportSubtitle")}
               </Text>
             </View>
             <Feather name="chevron-right" size={16} color="#8A8D96" />
@@ -326,7 +330,7 @@ export default function HomeScreen() {
           {expenseBreakedown.length > 0 && (
             <View className="bg-white rounded-[18px] border border-[#E8E6DF] p-4 mb-[18px]">
               <Text className="text-[#1A1D26] text-sm font-medium mb-3">
-                Expense breakdown (this month)
+                {t("home.expenseBreakdown")}
               </Text>
               <View className="flex-row items-center">
                 <PieChart
@@ -350,12 +354,9 @@ export default function HomeScreen() {
                           style={{ backgroundColor: c.color }}
                         />
                         <Text className="text-brand-text-secondary text-[11px]">
-                          {getCategoryConfig(c.category).label}
+                          {getCategoryLabel(c.category)}
                         </Text>
                       </View>
-                      <Text className="text-brand-bg text-[11px] font-medium">
-                        {formatPrice(c.amount, currency)}
-                      </Text>
                     </View>
                   ))}
                 </View>
@@ -365,12 +366,12 @@ export default function HomeScreen() {
 
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-[#1A1D26] text-sm font-medium">
-              Recent transactions
+              {t("home.recentTransactions")}
             </Text>
             <TouchableOpacity
               onPress={() => router.push("/(root)/(tabs)/transactions")}
             >
-              <Text className="text-brand-text-secondary text-xs">See all</Text>
+              <Text className="text-brand-text-secondary text-xs">{t("home.seeAll")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -382,7 +383,7 @@ export default function HomeScreen() {
             <View className="items-center py-6">
               <Feather name="inbox" size={28} color="#BDC3C7" />
               <Text className="text-brand-text-muted text-sm mt-3">
-                No transactions yet
+                {t("home.noTransactions")}
               </Text>
             </View>
           ) : (

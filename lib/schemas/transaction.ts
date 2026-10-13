@@ -6,13 +6,13 @@ export const transactionSchema = z.object({
     type: z.enum(["EXPENSE", "INCOME"]),
     amount: z
     .string()
-    .min(1, "Enter an amount.")
+    .min(1, "addTransaction.enterAmount")
     .refine((v) => {
         const parsed = parseAmount(v)
         return Number.isFinite(parsed) && parsed > 0
-    }, "Enter a valid amount."),
+    }, "addTransaction.enterValidAmount"),
     category: z.custom<CategoryKey>((v) => typeof v === "string"),
-    acccountId: z.string().min(1, "Select an account."),
+    acccountId: z.string().min(1, "addTransaction.selectAccount"),
     description: z.string().optional(),
     date: z.date(),
 })

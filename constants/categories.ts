@@ -1,3 +1,5 @@
+import i18n from "@/lib/i18n";
+
 export const CATEGORIES = {
   // ── EXPENSE (15) ──────────────────────────────────────────
   food: {
@@ -152,6 +154,11 @@ export const INCOME_CATEGORIES = Object.entries(CATEGORIES)
 
 // single lookup by key - use this everywhere instead of CATEGORIES[key]
 export const getCategoryConfig = (key: CategoryKey) => CATEGORIES[key];
+
+// label untuk ditampilkan di UI, mengikuti bahasa aktif.
+// (CATEGORIES[key].label tetap bahasa Inggris, dipakai untuk prompt AI.)
+export const getCategoryLabel = (key: CategoryKey) =>
+  i18n.t(`categories.${key}`);
 
 // used in Groq prompts - gives the model the full list of valid keys
 export const CATEGORY_KEYS_EXPENSE = EXPENSE_CATEGORIES.map((c) => c.key);

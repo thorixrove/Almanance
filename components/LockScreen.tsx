@@ -4,9 +4,11 @@ import { Feather } from "@expo/vector-icons"
 import { Image } from "expo-image"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native"
+import { useTranslation } from "react-i18next"
 
 
 export function LockScreen() {
+    const { t } = useTranslation()
     const unlock = useUserStore((state) => state.unlock)
     const [busy, setBusy] = useState(false)
     const [failed, setFailed] = useState(false)
@@ -46,12 +48,10 @@ export function LockScreen() {
             />
 
             <Text className="text-brand-text-primary text-lg font-semibold mt-6">
-                Almanance terkunci
+                {t("lock.title")}
             </Text>
             <Text className="text-brand-text-secondary text-sm text-center mt-2">
-                {failed
-                    ? "Autentikasi gagal. Coba lagi."
-                    : "Verifikasi identitas Anda untuk membuka app."}
+                {failed ? t("lock.failed") : t("lock.prompt")}
             </Text>
 
 
@@ -65,7 +65,7 @@ export function LockScreen() {
                 ) : (
                     <Feather name="unlock" size={16} color="#fff" />
                 )}
-                <Text className="text-white text-sm font-medium ml-2">Buka kunci</Text>
+                <Text className="text-white text-sm font-medium ml-2">{t("lock.unlock")}</Text>
             </TouchableOpacity>
         </View>
     )

@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Feather } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
 import {
   Image,
@@ -23,6 +24,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function OnBoardingScreen() {
   const { user} = useUser()
+  const { t } = useTranslation()
   const authSupabase = useSupabase()
   const setCurrency = useUserStore((s) => s.setCurrency)
   const setNeedsOnboarding = useUserStore((s) => s.setNeedsOnboarding)
@@ -60,7 +62,7 @@ export default function OnBoardingScreen() {
 
     if (updateError) {
       setSaving(false)
-      setError("Something went wrong. Please try again.")
+      setError(t("addTransaction.saveFailed"))
       return
     }
 
@@ -73,7 +75,7 @@ export default function OnBoardingScreen() {
 
     if (accountFetchError || !defaultAccount) {
       setSaving(false)
-      setError("Something went wrong. Please try again.")
+      setError(t("addTransaction.saveFailed"))
       return
     }
 
@@ -92,7 +94,7 @@ export default function OnBoardingScreen() {
 
     // Saldo akun diperbarui otomatis oleh trigger database.
     if (txError) {
-      setError("Something went wrong. Please try again.")
+      setError(t("addTransaction.saveFailed"))
       return
     }
 
@@ -114,15 +116,15 @@ export default function OnBoardingScreen() {
             resizeMode="contain"
             />
             <Text className="text-[#1A1D26] text-3xl font-bold mb-2">
-              Let&apos;s get you set up
+              {t("onboarding.title")}
             </Text>
             <Text className='text-brand-text-muted text-sm mb-10'>
-             Let’s get a few quick details to tailor your experience.
+             {t("onboarding.subtitle")}
             </Text>
 
             {/* Starting balance */}
             <Text className='text-brand-bg text-xs font-medium mb-1.5'>
-              Starting balance
+              {t("onboarding.startingBalance")}
             </Text>
             <View className="flex-row items-center bg-white border border-[#E8E6DF] rounded-xl px-4 mb-1">
                 <Text className="text-brand-text-secondary text-sm mr-2">
@@ -138,7 +140,7 @@ export default function OnBoardingScreen() {
                   setError("")
                   onChange(v)
                 }}
-                  placeholder="e.g. 50000"
+                  placeholder={t("onboarding.balancePlaceholder")}
                   placeholderTextColor="#8A8D96"
                   keyboardType="numeric"
                   returnKeyType="done"
@@ -149,14 +151,14 @@ export default function OnBoardingScreen() {
             </View>
             {formErrors.startingBalance && (
               <Text className='text-brand-coral  text-xs mb-4'>
-                  {formErrors.startingBalance.message}
+                  {t(formErrors.startingBalance.message ?? "")}
               </Text>
             )}
             <View className='mb-4'/>
 
             {/* Currency picker */}
             <Text className='text-brand-bg text-xs font-medium mb-1.5'>
-              Currency
+              {t("onboarding.currency")}
             </Text>
             <TouchableOpacity
             onPress={() => setPickerOpen(true)}
@@ -180,7 +182,7 @@ export default function OnBoardingScreen() {
             activeOpacity={0.85}
             >
               <Text className='text-white text-sm font-semibold'>
-                {saving ? "Saving" : "Get started"}
+                {saving ? t("onboarding.saving") : t("onboarding.getStarted")}
               </Text>
             </TouchableOpacity>
           </View>

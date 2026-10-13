@@ -4,6 +4,7 @@ import { COLORS } from "@/constants/theme"
 import { parseAmount } from "@/lib/utils"
 import { FormSheetModal } from "./FormSheetModal"
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Text, TextInput, TouchableOpacity } from "react-native";
 
 
@@ -18,6 +19,7 @@ export function BudgetModal({
   onClose: () => void
   onSaved: () => void
 }) {
+  const { t } = useTranslation()
   const [amount, setAmount] = useState("")
   const [error, setError] = useState("")
   const {mutateAsync: upsertBudget, isPending: saving} = useUpsertBudget()
@@ -33,7 +35,7 @@ export function BudgetModal({
     const parsedAmount = parseAmount(amount)
     
     if(!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      setError("Enter a valid monthly budget.")
+      setError(t("budget.invalid"))
       return
     }
 
@@ -43,18 +45,18 @@ export function BudgetModal({
       onSaved()
     } catch (error) {
       console.error("Error saving budget:", error)
-      setError("Something went wrong. Please try again")
+      setError(t("addTransaction.saveFailed"))
     }
   }
 
   return(
         <FormSheetModal
       visible={visible}
-      title={budget ? "Edit monthly budget" : "Set monthly budget"}
+      title={budget ? t("budget.editTitle") : t("budget.setTitle")}
       onClose={onClose}
     >
       <Text className="text-brand-bg text-xs font-medium mb-1.5">
-        Monthly budget
+        {t("home.monthlyBudget")}
       </Text>
       <TextInput
         value={amount}
@@ -62,7 +64,7 @@ export function BudgetModal({
           setError("");
           setAmount(v);
         }}
-        placeholder="e.g. 50000"
+        placeholder={t("budget.placeholder")}
         placeholderTextColor={COLORS.placeholder}
         keyboardType="numeric"
         autoFocus
@@ -80,7 +82,7 @@ export function BudgetModal({
         activeOpacity={0.85}
       >
         <Text className="text-white text-sm font-semibold">
-          {saving ? "Saving…" : "Save budget"}
+          {saving ? t("common.saving") : t("budget.save")}
         </Text>
       </TouchableOpacity>
     </FormSheetModal>

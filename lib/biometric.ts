@@ -1,5 +1,6 @@
 import * as LocalAuthentication from "expo-local-authentication"
 import * as SecureStore from "expo-secure-store"
+import i18n from "@/lib/i18n"
  
 const ENABLED_KEY = "biometric_lock_enabled"
  
@@ -17,7 +18,7 @@ export async function getBiometricSupport(): Promise<BiometricSupport>{
 }
 
 export async function authenticate(
-    promptMessage = "Buka Almanance"
+    promptMessage = i18n.t("lock.unlockPrompt")
 ) : Promise<boolean> {
     const result = await LocalAuthentication.authenticateAsync({
         promptMessage,

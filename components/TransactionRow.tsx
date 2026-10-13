@@ -1,9 +1,10 @@
-import { getCategoryConfig } from "@/constants/categories";
+import { getCategoryConfig, getCategoryLabel } from "@/constants/categories";
 import { Transaction } from "@/lib/services/transactions";
 import { isTransfer, ListTransaction } from "@/lib/utils/transfer";
 import { formatPrice } from "@/lib/utils";
 import { Feather } from "@expo/vector-icons";
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import { Text, TouchableOpacity, View } from "react-native";
 import Animated, {
@@ -86,7 +87,9 @@ function TransactionRowComponent({
     selected?: boolean
     onToggleSelect?: (tx: Transaction) => void
 }) {
+    const { t } = useTranslation()
     const config = getCategoryConfig(tx.category)
+    const categoryLabel = getCategoryLabel(tx.category)
     const transfer = isTransfer(tx)
     // Transfer: TRANSFER_IN bertanda +, TRANSFER_OUT bertanda -, warna netral.
     const isIncome = tx.type === "INCOME" || tx.type === "TRANSFER_IN"
@@ -126,7 +129,7 @@ function TransactionRowComponent({
         <Text className="text-brand-bg text-sm font-medium" numberOfLines={1}>
           {tx.transfer
             ? `${tx.transfer.fromName} → ${tx.transfer.toName}`
-            : tx.description || config.label}
+            : tx.description || categoryLabel}
         </Text>
         <View className="flex-row items-center gap-1.5 mt-0.5">
           <Feather
@@ -139,13 +142,13 @@ function TransactionRowComponent({
             style={{ backgroundColor: `${config.color}1A` }}
           >
             <Text className="text-[10px] font-medium" style={{ color: config.color }}>
-              {config.label}
+              {categoryLabel}
             </Text>
           </View>
           {tx.is_flagged && (
             <View className="flex-row items-center gap-1 ml-1">
               <Feather name="alert-triangle" size={11} color="#FF6B4A" />
-              <Text className="text-brand-coral text-[11px]">Flagged</Text>
+              <Text className="text-brand-coral text-[11px]">{t("txRow.flagged")}</Text>
             </View>
           )}
         </View>

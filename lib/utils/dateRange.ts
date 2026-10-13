@@ -2,13 +2,14 @@ import {
     endOfDay,
     endOfMonth,
     endOfWeek,
-    format,
     isSameDay,
     startOfDay,
     startOfMonth,
     startOfWeek,
     subMonths,
 } from "date-fns"
+import i18n from "@/lib/i18n"
+import { formatDate } from "@/lib/i18n/dateLocale"
 
 export type DateRangePreset =
     | "ALL"
@@ -27,12 +28,12 @@ export const ALL_TIME: DateRange = { preset: "ALL", from: null, to: null }
 
 const WEEK_OPTIONS = { weekStartsOn: 1 } as const
 
-export const PRESET_OPTIONS: { key: DateRangePreset; label: string }[] = [
-    { key: "ALL", label: "All time" },
-    { key: "THIS_WEEK", label: "This week" },
-    { key: "THIS_MONTH", label: "This month" },
-    { key: "LAST_MONTH", label: "Last month" },
-    { key: "CUSTOM", label: "Custom" },
+export const PRESET_OPTIONS: { key: DateRangePreset; labelKey: string }[] = [
+    { key: "ALL", labelKey: "dateRange.all" },
+    { key: "THIS_WEEK", labelKey: "dateRange.thisWeek" },
+    { key: "THIS_MONTH", labelKey: "dateRange.thisMonth" },
+    { key: "LAST_MONTH", labelKey: "dateRange.lastMonth" },
+    { key: "CUSTOM", labelKey: "dateRange.custom" },
 ]
 
 export function getPresetRange(
@@ -73,11 +74,11 @@ export function toFilterDates(range: DateRange) {
 export function formatRangeLabel(range: DateRange) {
     const option = PRESET_OPTIONS.find((o) => o.key === range.preset)
     if (range.preset !== "CUSTOM" || !range.from || !range.to) {
-        return option?.label ?? "All time"
+        return i18n.t(option?.labelKey ?? "dateRange.all")
     }
-    if (isSameDay(range.from, range.to)) return format(range.from, "d MMM yyyy")
+    if (isSameDay(range.from, range.to)) return formatDate(range.from, "d MMM yyyy")
     const sameYear = range.from.getFullYear() === range.to.getFullYear()
-    return `${format(range.from, sameYear ? "d MMM" : "d MMM yyyy")} – ${format(
+    return `${formatDate(range.from, sameYear ? "d MMM" : "d MMM yyyy")} – ${formatDate(
         range.to,
         "d MMM yyyy"
     )}`

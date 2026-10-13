@@ -1,11 +1,12 @@
 import { NativeTabs, Label, Icon } from 'expo-router/unstable-native-tabs';
 import {Feather} from "@expo/vector-icons"
 import { Tabs } from 'expo-router';
-import { Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 const useNativeTabs = false
 
 export default function TabLayout() {
+    const { t } = useTranslation()
     if (useNativeTabs) {
   return (
     <NativeTabs
@@ -18,28 +19,28 @@ export default function TabLayout() {
         }}
     >
       <NativeTabs.Trigger name="index">
-        <Label>Home</Label>
+        <Label>{t("tabs.home")}</Label>
         <Icon sf="house.fill"/>
       </NativeTabs.Trigger>
 
      <NativeTabs.Trigger name="transactions">
         <Icon sf="list.bullet"/>
-        <Label>Transactions</Label>
+        <Label>{t("tabs.transactions")}</Label>
       </NativeTabs.Trigger>
 
        <NativeTabs.Trigger name="add-transaction">
         <Icon sf="plus.circle.fill"/>
-        <Label>Add</Label>
+        <Label>{t("tabs.add")}</Label>
       </NativeTabs.Trigger>
 
         <NativeTabs.Trigger name="assistant">
         <Icon sf="brain.head.profile"/>
-        <Label>Assistant</Label>
+        <Label>{t("tabs.assistant")}</Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="profile">
         <Icon sf="person.fill"/>
-        <Label>Profile</Label>
+        <Label>{t("tabs.profile")}</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -62,7 +63,7 @@ return (
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: t("tabs.home"),
           tabBarIcon: ({ color, size }) => (
             <Feather name="home" size={size} color={color} />
           ),
@@ -71,7 +72,7 @@ return (
       <Tabs.Screen
         name="transactions"
         options={{
-          title: "Transactions",
+          title: t("tabs.transactions"),
           tabBarIcon: ({ color, size }) => (
             <Feather name="list" size={size} color={color} />
           ),
@@ -80,7 +81,7 @@ return (
       <Tabs.Screen
         name="add-transaction"
         options={{
-          title: "Add",
+          title: t("tabs.add"),
           tabBarIcon: ({ color, size }) => (
             <Feather name="plus-circle" size={size} color={color} />
           ),
@@ -89,7 +90,7 @@ return (
       <Tabs.Screen
         name="assistant"
         options={{
-          title: "Assistant",
+          title: t("tabs.assistant"),
           tabBarIcon: ({ color, size }) => (
             <Feather name="cpu" size={size} color={color} />
           ),
@@ -98,7 +99,7 @@ return (
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: t("tabs.profile"),
           tabBarIcon: ({ color, size }) => (
             <Feather name="user" size={size} color={color} />
           ),
