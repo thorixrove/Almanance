@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import cc from "currency-codes"
 import getSymbol from "currency-symbol-map"
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   FlatList,
   Modal,
@@ -34,6 +35,7 @@ export function CurrencyPicker({
     onSelect: (currency: CurrencyEntry) => void
     onClose: () => void
 }) {
+    const { t } = useTranslation()
     const [search, setSearch] = useState("")
 
     const filtered = useMemo(() => {
@@ -52,7 +54,7 @@ export function CurrencyPicker({
                     <TextInput
                     value={search}
                     onChangeText={setSearch}
-                    placeholder="Search currency"
+                    placeholder={t("currencyPicker.search")}
                      placeholderTextColor="#8A8D96"
                     autoFocus
                     className="flex-1 bg-white border border-[#E8E6DF] rounded-full px-4 py-2.5 text-sm text-brand-bg"
@@ -63,7 +65,7 @@ export function CurrencyPicker({
                         onClose()
                     }}
                     >
-                        <Text className="text-brand-text-secondary text-sm">Cancel</Text>
+                        <Text className="text-brand-text-secondary text-sm">{t("common.cancel")}</Text>
                     </TouchableOpacity>
                 </View>
                 <FlatList

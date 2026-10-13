@@ -2,6 +2,7 @@ import { codeSchema, SignInFormValues, signInSchema } from "@/lib/schemas/auth"
 import { useSignIn } from "@clerk/expo"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Link, useRouter } from "expo-router"
+import { useTranslation } from "react-i18next"
 import React, {useState} from "react"
 import { Controller, useForm } from "react-hook-form"
 import {
@@ -19,6 +20,7 @@ import { Ionicons } from "@expo/vector-icons"
 export default function SignIn() {
   const { signIn, errors, fetchStatus} = useSignIn()
   const router = useRouter()
+  const { t } = useTranslation()
   const [showPassword, setShowPassword] = useState(false)
   
     const {
@@ -102,7 +104,7 @@ export default function SignIn() {
             resizeMode="contain"
           />
           <Text className="text-3xl font-bold text-[#1A1D26] mb-2 leading-tight">
-            Verify your account
+            {t("auth.verifyTitle")}
           </Text>
 
           <Controller
@@ -112,7 +114,7 @@ export default function SignIn() {
               return (
                 <TextInput
                   className="border border-[#E8E6DF] bg-white rounded-xl px-4 py-3 mb-2 text-[#1A1D26]"
-                  placeholder="Enter verification code"
+                  placeholder={t("auth.codePlaceholder")}
                   placeholderTextColor="#8A8D96"
                   value={value}
                   onChangeText={onChange}
@@ -122,7 +124,7 @@ export default function SignIn() {
           />
           {codeErrors.code && (
             <Text className="text-brand-coral mb-4 text-sm">
-              {codeErrors.code.message}
+              {t(codeErrors.code.message ?? "")}
             </Text>
           )}
           {errors.fields.code && (
@@ -139,7 +141,7 @@ export default function SignIn() {
             {isLoading ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text className="text-white font-semibold text-base">Verify</Text>
+              <Text className="text-white font-semibold text-base">{t("auth.verify")}</Text>
             )}
           </TouchableOpacity>
 
@@ -147,11 +149,11 @@ export default function SignIn() {
             onPress={() => signIn.mfa.sendEmailCode()}
             className="py-2"
           >
-            <Text className="text-brand-blue text-sm">I need a new code</Text>
+            <Text className="text-brand-blue text-sm">{t("auth.resendCode")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => signIn.reset()} className="py-2">
-            <Text className="text-brand-blue text-sm">Start over</Text>
+            <Text className="text-brand-blue text-sm">{t("auth.startOver")}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -170,10 +172,10 @@ export default function SignIn() {
           resizeMode="contain"
         />
         <Text className="text-3xl font-bold text-[#1A1D26] mb-2 leading-tight">
-          Welcome back
+          {t("auth.welcomeBack")}
         </Text>
         <Text className="text-brand-text-muted text-base mb-8">
-          Sign in to your account
+          {t("auth.signInSubtitle")}
         </Text>
 
         <Controller
@@ -183,7 +185,7 @@ export default function SignIn() {
             return (
               <TextInput
                 className="border border-[#E8E6DF] bg-white rounded-xl px-4 py-3 mb-2 text-[#1A1D26]"
-                placeholder="Email Address"
+                placeholder={t("auth.email")}
                 placeholderTextColor="#8A8D96"
                 value={value}
                 onChangeText={onChange}
@@ -194,7 +196,7 @@ export default function SignIn() {
         />
         {formErrors.email && (
           <Text className="text-brand-coral mb-4 text-sm">
-            {formErrors.email.message}
+            {t(formErrors.email.message ?? "")}
           </Text>
         )}
         {errors.fields.identifier && (
@@ -211,7 +213,7 @@ export default function SignIn() {
               <View className="relative justify-center mb-2">
                 <TextInput
                   className="border border-[#E8E6DF] bg-white rounded-xl px-4 py-3 pr-12 text-[#1A1D26]"
-                  placeholder="Password"
+                  placeholder={t("auth.password")}
                   placeholderTextColor="#8A8D96"
                   value={value}
                   onChangeText={onChange}
@@ -235,7 +237,7 @@ export default function SignIn() {
 
         {formErrors.password && (
           <Text className="text-brand-coral mb-4 text-sm">
-            {formErrors.password.message}
+            {t(formErrors.password.message ?? "")}
           </Text>
         )}
         {errors.fields.password && (
@@ -252,16 +254,16 @@ export default function SignIn() {
           {isLoading ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text className="text-white font-semibold text-base">Sign In</Text>
+            <Text className="text-white font-semibold text-base">{t("auth.signIn")}</Text>
           )}
         </TouchableOpacity>
 
         <View className="flex-row justify-center">
           <Text className="text-brand-text-muted">
-            Don&apos;t have an account?{" "}
+            {t("auth.noAccount")}{" "}
           </Text>
           <Link href="/sign-up">
-            <Text className="text-brand-blue font-semibold">Sign Up</Text>
+            <Text className="text-brand-blue font-semibold">{t("auth.signUp")}</Text>
           </Link>
         </View>
       </View>

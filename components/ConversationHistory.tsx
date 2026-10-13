@@ -3,7 +3,8 @@ import { useAssistantConversationsQuery } from "@/hooks/queries/useAssistantConv
 import { useDeleteAssistantConversation } from "@/hooks/mutation/useAssistantConversationMutations"
 import type { AssistantConversation } from "@/lib/services/assistantConversations"
 import { Feather } from "@expo/vector-icons"
-import { format } from "date-fns"
+import { formatDate } from "@/lib/i18n/dateLocale"
+import { useTranslation } from "react-i18next"
 import {
   ActivityIndicator,
   Alert,
@@ -28,24 +29,25 @@ export function ConversationHistory({
   onSelect,
   onDeleted,
 }: Props) {
+  const { t } = useTranslation()
   const { data: conversations = [], isLoading, isError, refetch } =
     useAssistantConversationsQuery()
   const deleteConversation = useDeleteAssistantConversation()
 
   const confirmDelete = (conversation: AssistantConversation) => {
     Alert.alert(
-      "Delete chat?",
-      `"${conversation.title}" will be deleted permanently.`,
+      t("assistant.deleteTitle"),
+      t("assistant.deleteMessage", { title: conversation.title }),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("transactions.delete"),
           style: "destructive",
           onPress: () =>
             deleteConversation.mutate(conversation.id, {
               onSuccess: () => onDeleted(conversation.id),
               onError: () =>
-                Alert.alert("Failed", "Could not delete the chat. Try again."),
+                Alert.alert(t("common.failed"), t("assistant.deleteFailed")),
             }),
         },
       ]
@@ -54,7 +56,7 @@ export function ConversationHistory({
 
   return (
     // Sheet yang sama dengan Edit transaction: geser ke bawah atau ketuk area gelap untuk menutup
-    <BottomSheet visible={visible} title="Chat history" onClose={onClose}>
+    <BottomSheet visible={visible} title={t("assistant.historyTitle")} onClose={onClose}>
       {isLoading ? (
         <View className="py-10 items-center">
           <ActivityIndicator size="small" color="#4A9EFF" />
@@ -62,19 +64,19 @@ export function ConversationHistory({
       ) : isError ? (
         <View className="py-10 items-center">
           <Text className="text-brand-text-secondary text-sm mb-3">
-            Could not load your chats.
+            {t("assistant.loadFailed")}
           </Text>
           <TouchableOpacity
             onPress={() => refetch()}
             className="bg-brand-bg rounded-full px-5 py-2"
           >
-            <Text className="text-white text-sm">Try again</Text>
+            <Text className="text-white text-sm">{t("report.tryAgain")}</Text>
           </TouchableOpacity>
         </View>
       ) : conversations.length === 0 ? (
         <View className="py-10 items-center">
           <Text className="text-brand-text-secondary text-sm">
-            No chats yet. Ask something to start one.
+            {t("assistant.empty")}
           </Text>
         </View>
       ) : (
@@ -99,7 +101,7 @@ export function ConversationHistory({
                   {item.title}
                 </Text>
                 <Text className="text-brand-text-secondary text-xs mt-0.5">
-                  {format(new Date(item.updated_at), "d MMM yyyy, HH:mm")}
+                  {formatDate(new Date(item.updated_at), "d MMM yyyy, HH:mm")}
                 </Text>
               </View>
               <TouchableOpacity

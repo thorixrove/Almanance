@@ -5,6 +5,7 @@ import { useUserStore } from "@/store/useStore"
 import { useUser } from "@clerk/expo"
 import { Feather } from "@expo/vector-icons"
 import { useState, useEffect, useRef } from "react"
+import { useTranslation } from "react-i18next"
 import {
   ActivityIndicator,
   FlatList,
@@ -55,20 +56,14 @@ type ChatMessage = {
   content: string
 }
 
-const SUGGESTED_PROMPTS = [
-  "How much did I spend on food this month?",
-  "What's my biggest expense this week?",
-  "Am I over budget anywhere?",
-]
+const SUGGESTED_PROMPT_KEYS = [
+  "assistant.suggestFood",
+  "assistant.suggestBiggest",
+  "assistant.suggestBudget",
+] as const
 
 
-// Pesan sambutan hanya tampil di layar, tidak disimpan ke riwayat.
-const WELCOME_MESSAGE: ChatMessage = {
-  id: "welcome",
-  role: "assistant",
-  content:
-    "Hi! Ask me anything about your spending or budgets this month and last month.",
-}
+// Pesan sambutan (id "welcome") hanya tampil di layar, tidak disimpan ke riwayat.
 
 function MessageBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === "user"
@@ -88,6 +83,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 
 export default function AssistantScreen() {
   const { user } = useUser()
+  const { t } = useTranslation()
   const supabase = useSupabase()
   const currency = useUserStore((s) => s.currency)
   const { refetch: refetchTransactions } = useTransactionsQuery()
@@ -113,7 +109,7 @@ export default function AssistantScreen() {
   const messages: ChatMessage[] = loadingMessages
     ? []
     : stored.length === 0
-      ? [WELCOME_MESSAGE]
+      ? [{ id: "welcome", role: "assistant", content: t("assistant.welcome") }]
       : stored
 
 
@@ -139,7 +135,7 @@ export default function AssistantScreen() {
         setActiveId(conversation.id)
       } catch (error) {
         console.error("Create conversation error:", error)
-        setErrorMessage("Could not start a new chat. Try again.")
+        setErrorMessage(t("assistant.startFailed"))
         setInput(question)
         setSending(false)
         return
@@ -163,7 +159,7 @@ export default function AssistantScreen() {
     } catch (error) {
       console.error("Assistant Error:", error)
       // Pesan error hanya tampil sementara, tidak disimpan ke riwayat.
-      setErrorMessage("Sorry, something went wrong answering that. Try again.")
+      setErrorMessage(t("assistant.answerFailed"))
     } finally {
       setSending(false)
     }
@@ -191,7 +187,7 @@ export default function AssistantScreen() {
   return (
     <SafeAreaView className="flex-1 bg-brand-body" edges={["top"]}>
       <View className="px-5 pt-3 pb-2 flex-row items-center justify-between">
-        <Text className="text-brand-bg text-xl font-semibold">Assistant</Text>
+        <Text className="text-brand-bg text-xl font-semibold">{t("tabs.assistant")}</Text>
         <View className="flex-row items-center gap-5">
           <TouchableOpacity
             onPress={handleNewChat}
@@ -244,14 +240,14 @@ export default function AssistantScreen() {
 
         {!loadingMessages && !sending && stored.length === 0 && (
           <View className="px-5 pb-2 gap-2">
-            {SUGGESTED_PROMPTS.map((prompt) => (
+            {SUGGESTED_PROMPT_KEYS.map((promptKey) => (
               <TouchableOpacity
-                key={prompt}
-                onPress={() => sendMessage(prompt)}
+                key={promptKey}
+                onPress={() => sendMessage(t(promptKey))}
                 className="bg-white rounded-xl border border-[#E8E6DF] px-3.5 py-2.5 self-start"
               >
                 <Text className="text-brand-text-secondary text-xs">
-                  {prompt}
+                  {t(promptKey)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -266,7 +262,7 @@ export default function AssistantScreen() {
           <TextInput
             value={input}
             onChangeText={setInput}
-            placeholder="Ask about your money..."
+            placeholder={t("assistant.placeholder")}
             placeholderTextColor="#8A8D96"
             editable={!sending}
             className="flex-1 bg-white border border-[#E8E6DF] rounded-full px-4 py-3 text-sm text-brand-bg"

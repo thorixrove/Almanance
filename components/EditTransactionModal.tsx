@@ -2,7 +2,10 @@ import {
   CategoryKey,
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
+  getCategoryLabel,
 } from "@/constants/categories"
+import { formatDate } from "@/lib/i18n/dateLocale"
+import { useTranslation } from "react-i18next"
 import { COLORS } from "@/constants/theme"
 import { useUpdateTransaction } from "@/hooks/mutation/useTransactionMutations"
 import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery"
@@ -13,7 +16,6 @@ import type {
 } from "@/lib/services/transactions"
 import { parseAmount } from "@/lib/utils"
 import { Feather } from "@expo/vector-icons"
-import { format } from "date-fns"
 import { useEffect, useState } from "react"
 import { Text, TextInput, TouchableOpacity, View } from "react-native"
 import { BottomSheet } from "./BottomSheet"
@@ -21,8 +23,8 @@ import { CalendarPicker } from "./CalendarPicker"
 import { PillGroup } from "./PillGroup"
 
 const TYPE_OPTIONS = [
-  { key: "EXPENSE" as const, label: "Expense" },
-  { key: "INCOME" as const, label: "Income" },
+  { key: "EXPENSE" as const, labelKey: "transactions.expense" },
+  { key: "INCOME" as const, labelKey: "transactions.income" },
 ]
 
 // Nominal dari database bisa berupa desimal (mis. 15000.5). Dibuat 2 digit
@@ -42,6 +44,7 @@ export function EditTransactionModal({
   onClose: () => void
   onSaved: () => void
 }) {
+  const { t } = useTranslation()
   const { data: accounts = [] } = useAccountsQuery()
   const { mutateAsync: updateTransaction, isPending: saving } =
     useUpdateTransaction()
@@ -85,11 +88,11 @@ export function EditTransactionModal({
 
     const parsedAmount = parseAmount(amount)
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      setError("Enter a valid amount.")
+      setError(t("addTransaction.enterValidAmount"))
       return
     }
     if (!accountId) {
-      setError("Select an account.")
+      setError(t("addTransaction.selectAccount"))
       return
     }
 
@@ -117,13 +120,13 @@ export function EditTransactionModal({
       const result = await updateTransaction({ id: transaction.id, payload })
       if (result.error) {
         console.error("Error updating transaction:", result.error)
-        setError("Something went wrong. Please try again.")
+        setError(t("addTransaction.saveFailed"))
         return
       }
       onSaved()
     } catch (e) {
       console.error("Error updating transaction:", e)
-      setError("Something went wrong. Please try again.")
+      setError(t("addTransaction.saveFailed"))
     }
   }
 
@@ -140,7 +143,7 @@ export function EditTransactionModal({
         activeOpacity={0.85}
       >
         <Text className="text-white text-sm font-semibold">
-          {saving ? "Saving…" : "Save changes"}
+          {saving ? t("common.saving") : t("editTransaction.saveChanges")}
         </Text>
       </TouchableOpacity>
     </>
@@ -149,33 +152,33 @@ export function EditTransactionModal({
   return (
     <BottomSheet
       visible={visible}
-      title="Edit transaction"
+      title={t("editTransaction.title")}
       onClose={onClose}
       footer={footer}
     >
         {/* Type */}
         <View className="flex-row bg-white rounded-xl border border-[#E8E6DF] p-1 mb-4">
-          {TYPE_OPTIONS.map((t) => (
+          {TYPE_OPTIONS.map((opt) => (
             <TouchableOpacity
-              key={t.key}
-              onPress={() => handleTypeChange(t.key)}
+              key={opt.key}
+              onPress={() => handleTypeChange(opt.key)}
               className={`flex-1 py-2 rounded-lg items-center ${
-                type === t.key ? "bg-brand-bg" : ""
+                type === opt.key ? "bg-brand-bg" : ""
               }`}
             >
               <Text
                 className={`text-xs font-medium ${
-                  type === t.key ? "text-white" : "text-brand-text-secondary"
+                  type === opt.key ? "text-white" : "text-brand-text-secondary"
                 }`}
               >
-                {t.label}
+                {t(opt.labelKey)}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
         {/* Amount */}
-        <Text className="text-brand-bg text-xs font-medium mb-1.5">Amount</Text>
+        <Text className="text-brand-bg text-xs font-medium mb-1.5">{t("addTransaction.amount")}</Text>
         <TextInput
           value={amount}
           onChangeText={(v) => {
@@ -190,13 +193,13 @@ export function EditTransactionModal({
 
         {/* Category */}
         <Text className="text-brand-bg text-xs font-medium mb-1.5">
-          Category
+          {t("addTransaction.category")}
         </Text>
         <View className="mb-4">
           <PillGroup
             options={categories.map((c) => ({
               key: c.key,
-              label: c.label,
+              label: getCategoryLabel(c.key),
               icon: c.icon,
             }))}
             value={category}
@@ -205,7 +208,7 @@ export function EditTransactionModal({
         </View>
 
         {/* Account */}
-        <Text className="text-brand-bg text-xs font-medium mb-1.5">Account</Text>
+        <Text className="text-brand-bg text-xs font-medium mb-1.5">{t("addTransaction.account")}</Text>
         <View className="mb-4">
           <PillGroup
             options={accounts.map((a) => ({ key: a.id, label: a.name }))}
@@ -215,13 +218,13 @@ export function EditTransactionModal({
         </View>
 
         {/* Date */}
-        <Text className="text-brand-bg text-xs font-medium mb-1.5">Date</Text>
+        <Text className="text-brand-bg text-xs font-medium mb-1.5">{t("addTransaction.date")}</Text>
         <TouchableOpacity
           onPress={() => setDatePickerOpen((v) => !v)}
           className="flex-row items-center justify-between bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-4"
         >
           <Text className="text-sm text-brand-bg">
-            {format(date, "d MMM yyyy")}
+            {formatDate(date, "d MMM yyyy")}
           </Text>
           <Feather name="calendar" size={16} color="#5C5F68" />
         </TouchableOpacity>
@@ -241,12 +244,12 @@ export function EditTransactionModal({
 
         {/* Description */}
         <Text className="text-brand-bg text-xs font-medium mb-1.5">
-          Description (optional)
+          {t("addTransaction.description")}
         </Text>
         <TextInput
           value={description}
           onChangeText={setDescription}
-          placeholder="e.g. Lunch at warung"
+          placeholder={t("addTransaction.descriptionPlaceholder")}
           placeholderTextColor={COLORS.placeholder}
           className="bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-4 text-sm text-brand-bg"
         />

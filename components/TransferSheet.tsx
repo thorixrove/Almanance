@@ -4,7 +4,8 @@ import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery"
 import { formatPrice, parseAmount } from "@/lib/utils"
 import { useUserStore } from "@/store/useStore"
 import { Feather } from "@expo/vector-icons"
-import { format } from "date-fns"
+import { formatDate } from "@/lib/i18n/dateLocale"
+import { useTranslation } from "react-i18next"
 import { useEffect, useState } from "react"
 import { Text, TextInput, TouchableOpacity, View } from "react-native"
 import { BottomSheet } from "./BottomSheet"
@@ -20,6 +21,7 @@ export function TransferSheet({
   onClose: () => void
   onSaved: () => void
 }) {
+  const { t } = useTranslation()
   const currency = useUserStore((s) => s.currency)
   const { data: accounts = [] } = useAccountsQuery()
   const { mutateAsync: createTransfer, isPending: saving } = useCreateTransfer()
@@ -66,15 +68,15 @@ export function TransferSheet({
   const handleSave = async () => {
     const parsedAmount = parseAmount(amount)
     if (!fromId || !toId) {
-      setError("Select both accounts.")
+      setError(t("transfer.selectBoth"))
       return
     }
     if (fromId === toId) {
-      setError("Source and destination accounts must be different.")
+      setError(t("transfer.sameAccount"))
       return
     }
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      setError("Enter a valid amount.")
+      setError(t("addTransaction.enterValidAmount"))
       return
     }
 
@@ -89,13 +91,13 @@ export function TransferSheet({
       })
       if (result.error) {
         console.error("Error creating transfer:", result.error)
-        setError("Something went wrong. Please try again.")
+        setError(t("addTransaction.saveFailed"))
         return
       }
       onSaved()
     } catch (e) {
       console.error("Error creating transfer:", e)
-      setError("Something went wrong. Please try again.")
+      setError(t("addTransaction.saveFailed"))
     }
   }
 
@@ -114,7 +116,7 @@ export function TransferSheet({
         activeOpacity={0.85}
       >
         <Text className="text-white text-sm font-semibold">
-          {saving ? "Transferring…" : "Transfer"}
+          {saving ? t("transfer.transferring") : t("transfer.action")}
         </Text>
       </TouchableOpacity>
     </>
@@ -123,19 +125,18 @@ export function TransferSheet({
   return (
     <BottomSheet
       visible={visible}
-      title="Transfer between accounts"
+      title={t("transfer.title")}
       onClose={onClose}
       footer={footer}
     >
       {notEnoughAccounts ? (
         <Text className="text-brand-text-secondary text-sm mb-2">
-          You need at least two accounts to make a transfer. Add another account
-          from the Profile tab first.
+          {t("transfer.needTwoAccounts")}
         </Text>
       ) : (
         <>
           {/* From */}
-          <Text className="text-brand-bg text-xs font-medium mb-1.5">From</Text>
+          <Text className="text-brand-bg text-xs font-medium mb-1.5">{t("transfer.from")}</Text>
           <View className="mb-1.5">
             <PillGroup
               options={accounts.map((a) => ({ key: a.id, label: a.name }))}
@@ -145,12 +146,12 @@ export function TransferSheet({
           </View>
           {fromAccount && (
             <Text className="text-brand-text-secondary text-[11px] mb-3">
-              Balance: {formatPrice(fromAccount.balance, currency)}
+              {t("transfer.balance", { amount: formatPrice(fromAccount.balance, currency) })}
             </Text>
           )}
 
           {/* To */}
-          <Text className="text-brand-bg text-xs font-medium mb-1.5">To</Text>
+          <Text className="text-brand-bg text-xs font-medium mb-1.5">{t("transfer.to")}</Text>
           <View className="mb-1.5">
             <PillGroup
               options={accounts
@@ -165,12 +166,12 @@ export function TransferSheet({
           </View>
           {toAccount && (
             <Text className="text-brand-text-secondary text-[11px] mb-4">
-              Balance: {formatPrice(toAccount.balance, currency)}
+              {t("transfer.balance", { amount: formatPrice(toAccount.balance, currency) })}
             </Text>
           )}
 
           {/* Amount */}
-          <Text className="text-brand-bg text-xs font-medium mb-1.5">Amount</Text>
+          <Text className="text-brand-bg text-xs font-medium mb-1.5">{t("addTransaction.amount")}</Text>
           <TextInput
             value={amount}
             onChangeText={(v) => {
@@ -184,13 +185,13 @@ export function TransferSheet({
           />
 
           {/* Date */}
-          <Text className="text-brand-bg text-xs font-medium mb-1.5">Date</Text>
+          <Text className="text-brand-bg text-xs font-medium mb-1.5">{t("addTransaction.date")}</Text>
           <TouchableOpacity
             onPress={() => setDatePickerOpen((v) => !v)}
             className="flex-row items-center justify-between bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-4"
           >
             <Text className="text-sm text-brand-bg">
-              {format(date, "d MMM yyyy")}
+              {formatDate(date, "d MMM yyyy")}
             </Text>
             <Feather name="calendar" size={16} color="#5C5F68" />
           </TouchableOpacity>
@@ -210,12 +211,12 @@ export function TransferSheet({
 
           {/* Note */}
           <Text className="text-brand-bg text-xs font-medium mb-1.5">
-            Note (optional)
+            {t("transfer.note")}
           </Text>
           <TextInput
             value={note}
             onChangeText={setNote}
-            placeholder="e.g. Top up bank"
+            placeholder={t("transfer.notePlaceholder")}
             placeholderTextColor={COLORS.placeholder}
             className="bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-4 text-sm text-brand-bg"
           />

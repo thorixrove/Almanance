@@ -7,7 +7,9 @@ import {
     getPresetRange,
     PRESET_OPTIONS,
 } from "@/lib/utils/dateRange"
-import { format } from "date-fns"
+import "dayjs/locale/id"
+import { formatDate } from "@/lib/i18n/dateLocale"
+import { useTranslation } from "react-i18next"
 import { useEffect, useState } from "react"
 import { Text, TouchableOpacity, View } from "react-native"
 import DateTimePicker, { useDefaultStyles } from "react-native-ui-datepicker"
@@ -23,7 +25,12 @@ export function DateRangeSheet({
     onClose: () => void
     onApply: (range: DateRange) => void
 }) {
+    const { t, i18n } = useTranslation()
     const defaultStyles = useDefaultStyles("light")
+    const presetOptions = PRESET_OPTIONS.map((o) => ({
+        key: o.key,
+        label: t(o.labelKey),
+    }))
     const [showCustom, setShowCustom] = useState(false)
     const [start, setStart] = useState<Date | null>(null)
     const [end, setEnd] = useState<Date | null>(null)
@@ -58,27 +65,27 @@ export function DateRangeSheet({
                 }`}
             activeOpacity={0.85}
         >
-            <Text className="text-white text-sm font-semibold">Apply</Text>
+            <Text className="text-white text-sm font-semibold">{t("dateRange.apply")}</Text>
         </TouchableOpacity>
     ) : undefined
 
     return (
         <BottomSheet
             visible={visible}
-            title="Date range"
+            title={t("dateRange.title")}
             onClose={onClose}
             footer={footer}
         >
-            <PillGroup options={PRESET_OPTIONS}
+            <PillGroup options={presetOptions}
                 value={showCustom ? "CUSTOM" : value.preset}
                 onChange={handlePreset} />
             {showCustom && (
                 <View className="mt-4">
                     <Text className="text-brand-text-secondary text-xs mb-2">
                         {start
-                            ? `${format(start, "d MMM yyyy")} – ${end ? format(end, "d MMM yyyy") : "pick end date"
+                            ? `${formatDate(start, "d MMM yyyy")} – ${end ? formatDate(end, "d MMM yyyy") : t("dateRange.pickEnd")
                             }`
-                            : "Pick a start date, then an end date"
+                            : t("dateRange.pickStart")
                         }
                     </Text>
                     <View className="bg-white border border-[#E8E6DF] rounded-xl mb-4 overflow-hidden">
@@ -88,6 +95,7 @@ export function DateRangeSheet({
                             endDate={end}
                             maxDate={new Date()}
                             firstDayOfWeek={1}
+                            locale={i18n.language}
                             allowRangeReset
                             onChange={({ startDate, endDate }) => {
                                 setStart(startDate ? new Date(startDate as string | number | Date) : null)

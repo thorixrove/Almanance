@@ -1,4 +1,6 @@
-import { getCategoryConfig } from "@/constants/categories"
+import { getCategoryConfig, getCategoryLabel } from "@/constants/categories"
+import i18n from "@/lib/i18n"
+import { formatDate } from "@/lib/i18n/dateLocale"
 import { useMonthlyReportQuery } from "@/hooks/queries/useMonthlyReportQuery"
 import { formatPrice } from "@/lib/utils"
 import { useUserStore } from "@/store/useStore"
@@ -7,12 +9,12 @@ import { Feather } from "@expo/vector-icons"
 import {
   addMonths,
   differenceInCalendarMonths,
-  format,
   isSameMonth,
   startOfMonth,
   subMonths,
 } from "date-fns"
 import { useRouter } from "expo-router"
+import { useTranslation } from "react-i18next"
 import { useCallback, useMemo, useRef, useState } from "react"
 import {
   ActivityIndicator,
@@ -41,8 +43,8 @@ function deltaColor(diff: number) {
 }
 
 function deltaText(delta: ReportDelta) {
-  if (delta.diff === 0) return "No change"
-  if (delta.percent === null) return "New"
+  if (delta.diff === 0) return i18n.t("report.noChange")
+  if (delta.percent === null) return i18n.t("report.new")
   const sign = delta.diff > 0 ? "+" : "-"
   return `${sign}${Math.abs(Math.round(delta.percent))}%`
 }
@@ -79,6 +81,7 @@ function CategoryRow({
   currency: string
   isLast: boolean
 }) {
+  const { t } = useTranslation()
   const config = getCategoryConfig(item.category)
   const barWidth =
     item.current > 0 ? `${Math.max((item.current / maxValue) * 100, 2)}%` : "0%"
@@ -89,7 +92,7 @@ function CategoryRow({
         <View className="flex-row items-center gap-2 flex-1">
           <Text className="text-base">{config.icon}</Text>
           <Text className="text-brand-bg text-[13px] font-medium" numberOfLines={1}>
-            {config.label}
+            {getCategoryLabel(item.category)}
           </Text>
         </View>
         <DeltaBadge delta={item} />
@@ -107,7 +110,7 @@ function CategoryRow({
           {formatPrice(item.current, currency)}
         </Text>
         <Text className="text-brand-text-secondary text-xs">
-          {formatPrice(item.previous, currency)} last month
+          {t("report.lastMonthAmount", { amount: formatPrice(item.previous, currency) })}
         </Text>
       </View>
     </View>
@@ -126,6 +129,7 @@ function MonthPage({
   width: number
   currency: string
 }) {
+  const { t } = useTranslation()
   const { report, isLoading, isError, isRefetching, refetch } =
     useMonthlyReportQuery(month)
 
@@ -148,13 +152,13 @@ function MonthPage({
       ) : isError ? (
         <View className="py-16 items-center">
           <Text className="text-brand-text-secondary text-sm mb-3">
-            Couldn't load the report.
+            {t("report.loadError")}
           </Text>
           <TouchableOpacity
             onPress={() => refetch()}
             className="bg-brand-bg rounded-xl px-5 py-3"
           >
-            <Text className="text-white text-sm font-semibold">Try again</Text>
+            <Text className="text-white text-sm font-semibold">{t("report.tryAgain")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -162,7 +166,7 @@ function MonthPage({
           {/* Total */}
           <View className="bg-brand-bg rounded-[20px] p-5 mt-2 mb-4">
             <Text className="text-brand-text-secondary text-xs mb-1.5">
-              Total spending
+              {t("report.totalSpending")}
             </Text>
             <Text className="text-brand-text-primary text-[32px] font-medium tracking-tight">
               {formatPrice(report.total.current, currency)}
@@ -170,14 +174,15 @@ function MonthPage({
             <View className="flex-row items-center gap-2 mt-3">
               <DeltaBadge delta={report.total} />
               <Text className="text-brand-text-secondary text-xs flex-1">
-                vs {formatPrice(report.total.previous, currency)} in{" "}
-                {format(previousMonth, "MMM yyyy")}
+                {t("report.versus", {
+                  amount: formatPrice(report.total.previous, currency),
+                  month: formatDate(previousMonth, "MMM yyyy"),
+                })}
               </Text>
             </View>
             {isCurrentMonth && (
               <Text className="text-brand-text-secondary text-[11px] mt-3">
-                This month is still in progress, compared with the full
-                previous month.
+                {t("report.inProgress")}
               </Text>
             )}
           </View>
@@ -185,12 +190,12 @@ function MonthPage({
           {/* Per kategori */}
           <View className="bg-white rounded-[18px] border border-[#E8E6DF] px-4 pt-4 pb-1">
             <Text className="text-brand-bg text-sm font-medium">
-              By category
+              {t("report.byCategory")}
             </Text>
 
             {report.categories.length === 0 ? (
               <Text className="text-brand-text-secondary text-xs py-6 text-center">
-                No expenses in this period.
+                {t("report.noExpenses")}
               </Text>
             ) : (
               report.categories.map((item, index) => (
@@ -226,6 +231,7 @@ function MonthPickerModal({
   onSelect: (month: Date) => void
   onClose: () => void
 }) {
+  useTranslation()
   const [year, setYear] = useState(selected.getFullYear())
   const minYear = minMonth.getFullYear()
   const maxYear = maxMonth.getFullYear()
@@ -289,7 +295,7 @@ function MonthPickerModal({
                         active ? "text-white" : "text-brand-bg"
                       }`}
                     >
-                      {format(date, "MMM")}
+                      {formatDate(date, "MMM")}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -304,6 +310,7 @@ function MonthPickerModal({
 
 export default function ReportScreen() {
   const router = useRouter()
+  const { t } = useTranslation()
   const currency = useUserStore((s) => s.currency)
   const { width } = useWindowDimensions()
 
@@ -356,7 +363,7 @@ export default function ReportScreen() {
         >
           <Feather name="arrow-left" size={18} color="#1A1D26" />
         </TouchableOpacity>
-        <Text className="text-brand-bg text-lg font-medium">Monthly report</Text>
+        <Text className="text-brand-bg text-lg font-medium">{t("home.monthlyReport")}</Text>
       </View>
 
       {/* Bulan terpilih: tap untuk lompat ke bulan mana pun */}
@@ -374,7 +381,7 @@ export default function ReportScreen() {
         />
         <View className="flex-row items-center gap-1.5">
           <Text className="text-brand-bg text-sm font-medium">
-            {format(month, "MMMM yyyy")}
+            {formatDate(month, "MMMM yyyy")}
           </Text>
           <Feather name="chevron-down" size={14} color="#8A8D96" />
         </View>
@@ -386,7 +393,7 @@ export default function ReportScreen() {
         />
       </TouchableOpacity>
       <Text className="text-brand-text-secondary text-[11px] text-center mt-1.5">
-        Swipe left or right to change month
+        {t("report.swipeHint")}
       </Text>
 
       <FlatList

@@ -4,7 +4,9 @@ import { AI_GRADIENT, AI_GRADIENT_REVERSE } from "@/constants/theme";
 import { PillGroup } from "@/components/PillGroup";
 import { ReceiptScannerModal } from "@/components/ReceiptScannerModal";
 import { VoiceRecorderModal } from "@/components/VoiceRecorderModal";
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, CategoryKey } from "@/constants/categories";
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, CategoryKey, getCategoryLabel } from "@/constants/categories";
+import { formatDate } from "@/lib/i18n/dateLocale";
+import { useTranslation } from "react-i18next";
 import { useCreateTransactions } from "@/hooks/mutation/useTransactionMutations";
 import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery";
 import { useSupabase } from "@/hooks/useSupabase";
@@ -22,7 +24,7 @@ import { parseAmount } from "@/lib/utils";
 import { useUser } from "@clerk/expo";
 import { Feather } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, isValid } from "date-fns";
+import { isValid } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -43,8 +45,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 
 const TYPE_OPTIONS = [
-  { key: "EXPENSE" as const, label: "Expense"},
-  { key: "INCOME" as const, label: "Income"},
+  { key: "EXPENSE" as const, labelKey: "transactions.expense" },
+  { key: "INCOME" as const, labelKey: "transactions.income" },
 ]
 
 function useKeyboardHeight() {
@@ -81,6 +83,7 @@ const DEFAULT_VALUES = (accounts: Account[]): TransactionFormValues => ({
 
 export default function AddTransaction() {
   const {user} = useUser()
+  const { t } = useTranslation()
   const router = useRouter()
   const params = useLocalSearchParams<{action?: string}>()
   const keyboardHeight = useKeyboardHeight()
@@ -144,13 +147,15 @@ export default function AddTransaction() {
             }
 
             const missing = [
-              result.amount == null && "amount",
-              !isValidCategory(result.category) && "category",
+              result.amount == null && t("addTransaction.fieldAmount"),
+              !isValidCategory(result.category) && t("addTransaction.fieldCategory"),
             ].filter(Boolean)
             if (missing.length > 0) {
               Alert.alert(
-                "Review before saving",
-                `Couldn't confidently read the ${missing.join(" and ")}. Please fill it in.`
+                t("addTransaction.reviewTitle"),
+                t("addTransaction.reviewMessage", {
+                  fields: missing.join(t("addTransaction.fieldJoiner")),
+                })
               )
             }
   }
@@ -164,7 +169,7 @@ export default function AddTransaction() {
       setInputMethod("RECEIPT_SCAN")
     } catch (error) {
       console.error("Receipt scan folder:", error)
-      Alert.alert("Error", "Couldn't read that receipt. Try again or enter it manually.")
+      Alert.alert(t("common.error"), t("addTransaction.receiptFailed"))
     } finally {
       setScanning(false)
     }
@@ -207,7 +212,7 @@ export default function AddTransaction() {
     })
 
     if (createError) {
-      setError("Something went wrong. Please try again.")
+      setError(t("addTransaction.saveFailed"))
       return
     }
 
@@ -226,7 +231,7 @@ export default function AddTransaction() {
     <SafeAreaView className="flex-1 bg-brand-body" edges={["top"]}>
       <View className="px-5 pt-3 pb-2">
         <Text className="text-brand-bg text-xl font-semibold">
-          Add transaction
+          {t("addTransaction.title")}
           </Text>
       </View>
 
@@ -243,14 +248,14 @@ export default function AddTransaction() {
           <View className="flex-1 items-center justify-center px-10">
             <Feather name="alert-circle" size={32} color="#FF6B4A" />
             <Text className="text-brand-text-muted text-sm mt-3 text-center">
-              Couldn&apos;t load your accounts.
+              {t("profile.loadAccountsFailed")}
             </Text>
           </View>
         ): accounts.length === 0 ? (
           <View className="flex-1 items-center justify-center px-10">
             <Feather name="alert-circle" size={32} color="#FF6B4A" />
             <Text className="text-brand-text-muted text-sm mt-3 text-center">
-              You need an account before adding a transaction.
+              {t("addTransaction.needAccount")}
             </Text>
           </View>
         ): (
@@ -266,15 +271,15 @@ export default function AddTransaction() {
             <View className="flex-row gap-2.5 mb-4">
               <AIActionCard
                 icon="camera"
-                title="Scan receipt"
-                subtitle="Snap a photo"
+                title={t("addTransaction.scanTitle")}
+                subtitle={t("addTransaction.scanSubtitle")}
                 colors={AI_GRADIENT}
                 onPress={() => setScannerOpen(true)}
               />
               <AIActionCard
                 icon="mic"
-                title="Voice log"
-                subtitle="Just say it"
+                title={t("addTransaction.voiceTitle")}
+                subtitle={t("addTransaction.voiceSubtitle")}
                 colors={AI_GRADIENT_REVERSE}
                 onPress={() => setVoiceModalOpen(true)}
               />
@@ -282,29 +287,29 @@ export default function AddTransaction() {
 
             {/* Type toggle */}
               <View className="flex-row bg-white rounded-xl border border-[#E8E6DF] p-1 mb-4">
-              {TYPE_OPTIONS.map((t) => (
+              {TYPE_OPTIONS.map((opt) => (
                 <TouchableOpacity
-                key={t.key}
+                key={opt.key}
                 onPress={() => {
-                  setValue("type", t.key)
+                  setValue("type", opt.key)
                   setValue(
                     "category",
-                    t.key === "INCOME"
+                    opt.key === "INCOME"
                     ? INCOME_CATEGORIES[0].key
                     : EXPENSE_CATEGORIES[0].key
                   )
                 }}
                 className={`flex-1 py-2 rounded-lg items-center ${
-                type === t.key ? "bg-brand-bg" : ""
+                type === opt.key ? "bg-brand-bg" : ""
                   }`}
                 >
                   <Text
                     className={`text-xs font-medium ${
-                      type === t.key
+                      type === opt.key
                         ? "text-white"
                         : "text-brand-text-secondary"
                     }`}>
-                      {t.label}
+                      {t(opt.labelKey)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -312,7 +317,7 @@ export default function AddTransaction() {
 
             
             <Text className="text-brand-bg text-xs font-medium mb-1.5">
-              Amount
+              {t("addTransaction.amount")}
             </Text>
             <Controller
             control={control}
@@ -334,20 +339,20 @@ export default function AddTransaction() {
             />
             {errors.amount && (
               <Text className="text-brand-coral text-xs mt-1.5">
-                {errors.amount.message}
+                {t(errors.amount.message ?? "")}
               </Text>
             )}
             <View className="mb-4"/>
 
             {/* Category */}
             <Text className="text-brand-bg text-xs font-medium mb-1.5">
-            Category
+            {t("addTransaction.category")}
             </Text>
             <View>
               <PillGroup
               options={categories.map((c) => ({
                 key: c.key,
-                label: c.label,
+                label: getCategoryLabel(c.key),
                 icon: c.icon,
               }))}
               value={category}
@@ -357,7 +362,7 @@ export default function AddTransaction() {
 
               {/* Account */}
               <Text className="text-brand-bg text-xs font-medium mb-1.5">
-                Account
+                {t("addTransaction.account")}
               </Text>
               <View className="mb-1">
               <PillGroup
@@ -368,21 +373,21 @@ export default function AddTransaction() {
               </View>
               {errors.acccountId && (
                 <Text className="text-brand-coral text-xs mb-3">
-                  {errors.acccountId.message}
+                  {t(errors.acccountId.message ?? "")}
                 </Text>
               )}
               <View className="mb-3"/>
 
               {/* Date */}
               <Text className="text-brand-bg text-xs font-medium mb-1.5">
-                Date
+                {t("addTransaction.date")}
               </Text>
               <TouchableOpacity
               onPress={() => setDatePickerOpen((v) => !v)}
                className="flex-row items-center justify-between bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-1"
               >
                  <Text className="text-sm text-brand-bg">
-                  {format(date, "d MMM yyyy")}
+                  {formatDate(date, "d MMM yyyy")}
                 </Text>
                 <Feather name="calendar" size={16} color="#5C5F68" />
               </TouchableOpacity>
@@ -403,7 +408,7 @@ export default function AddTransaction() {
 
               {/* Description */}
               <Text className="text-brand-bg text-xs font-medium mb-1.5">
-                Description (optional)
+                {t("addTransaction.description")}
               </Text>
               <Controller
               control={control}
@@ -413,7 +418,7 @@ export default function AddTransaction() {
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
-                placeholder="e.g. Lunch at warung"
+                placeholder={t("addTransaction.descriptionPlaceholder")}
                 placeholderTextColor="#8A8D96"
                 className="bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-4 text-sm text-brand-bg"
                 />
@@ -431,7 +436,7 @@ export default function AddTransaction() {
               activeOpacity={0.85}
               >
                 <Text className="text-white text-sm font-semibold">
-                  {saving ? "Saving.." : "Save transaction"}
+                  {saving ? t("addTransaction.saving") : t("addTransaction.save")}
                 </Text>
               </TouchableOpacity>
           </ScrollView>
@@ -443,7 +448,7 @@ export default function AddTransaction() {
         <View className="absolute inset-0 items-center justify-center bg-black/40">
           <View className="bg-white rounded-2xl px-6 py-5 items-center">
             <ActivityIndicator color="#4A9EFF" />
-            <Text className="text-brand-bg text-sm mt-3">Reading receipt…</Text>
+            <Text className="text-brand-bg text-sm mt-3">{t("addTransaction.readingReceipt")}</Text>
           </View>
         </View>
       )}

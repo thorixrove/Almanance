@@ -7,7 +7,7 @@ import id from "./locales/id"
 export type Language = "en" | "id"
 
 export const LANGUAGES: { code: Language; label: string }[] = [
-  { code: "id", label: "Bahasa Indonesia" },
+  { code: "id", label: "Indonesia" },
   { code: "en", label: "English" },
 ]
 

@@ -2,6 +2,7 @@ import { codeSchema, SignUpFormValues, signUpSchema } from "@/lib/schemas/auth"
 import { useAuth, useSignUp } from "@clerk/expo"
 import { zodResolver} from "@hookform/resolvers/zod"
 import { Link, useRouter } from "expo-router"
+import { useTranslation } from "react-i18next"
 import React, {useEffect, useState} from "react"
 import { Controller, useForm } from "react-hook-form"
 import {
@@ -45,6 +46,7 @@ export default function SignUpScreen() {
   const { signUp, errors, fetchStatus} = useSignUp()
   const { isSignedIn} = useAuth()
   const router = useRouter()
+  const { t } = useTranslation()
   const keyboardHeight = useKeyboardHeight()
   const [showPassword, setShowPassword] = useState(false)
 
@@ -136,10 +138,10 @@ export default function SignUpScreen() {
               resizeMode="contain"
             />
             <Text className="text-3xl font-bold text-[#1A1D26] mb-2 leading-tight">
-              Verify your account
+              {t("auth.verifyTitle")}
             </Text>
             <Text className="text-brand-text-muted text-base mb-8">
-              We sent code to {email}
+              {t("auth.sentCode", { email })}
             </Text>
 
             <Controller
@@ -149,7 +151,7 @@ export default function SignUpScreen() {
                 return  (
                   <TextInput
                     className="border border-[#E8E6DF] bg-white rounded-xl px-4 py-3 mb-2 text-[#1A1D26]"
-                    placeholder="Enter verification code"
+                    placeholder={t("auth.codePlaceholder")}
                     placeholderTextColor="#8A8D96"
                     value={value}
                     onChangeText={onChange}
@@ -159,7 +161,7 @@ export default function SignUpScreen() {
             />
             {codeErrors.code && (
               <Text className="text-brand-coral mb-4 text-sm">
-                {codeErrors.code.message}
+                {t(codeErrors.code.message ?? "")}
               </Text>
             )}
             {errors.fields.code && (
@@ -176,7 +178,7 @@ export default function SignUpScreen() {
               {isLoading ? (
                 <ActivityIndicator color="white" />
               ) : (
-                <Text className="text-white font-semibold text-base">Verify</Text>
+                <Text className="text-white font-semibold text-base">{t("auth.verify")}</Text>
               )}
             </TouchableOpacity>
 
@@ -184,11 +186,11 @@ export default function SignUpScreen() {
               onPress={() => signUp.verifications.sendEmailCode()}
               className="py-2"
             >
-              <Text className="text-brand-blue text-sm">I need a new code</Text>
+              <Text className="text-brand-blue text-sm">{t("auth.resendCode")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => signUp.reset()} className="py-2">
-              <Text className="text-brand-blue text-sm"> Start over</Text>
+              <Text className="text-brand-blue text-sm">{t("auth.startOver")}</Text>
             </TouchableOpacity>
           </ScrollView>
         </TouchableWithoutFeedback>
@@ -218,10 +220,10 @@ export default function SignUpScreen() {
             resizeMode="contain"
           />
           <Text className="text-3xl font-bold text-[#1A1D26] mb-2 leading-tight">
-            Create account
+            {t("auth.createAccount")}
           </Text>
           <Text className="text-brand-text-muted text-base mb-8">
-            Track your money, powered by AI
+            {t("auth.createSubtitle")}
           </Text>
 
           <View className="flex-row gap-3 mb-2">
@@ -232,7 +234,7 @@ export default function SignUpScreen() {
                 return (
                   <TextInput
                     className="flex-1 border border-[#E8E6DF] bg-white rounded-xl px-4 py-3 text-[#1A1D26]"
-                    placeholder="First name"
+                    placeholder={t("auth.firstName")}
                     placeholderTextColor="#8A8D96"
                     value={value}
                     onChangeText={onChange}
@@ -248,7 +250,7 @@ export default function SignUpScreen() {
                 return (
                   <TextInput
                     className="flex-1 border border-[#E8E6DF] bg-white rounded-xl px-4 py-3 text-[#1A1D26]"
-                    placeholder="Last name"
+                    placeholder={t("auth.lastName")}
                     placeholderTextColor="#8A8D96"
                     value={value}
                     onChangeText={onChange}
@@ -260,7 +262,7 @@ export default function SignUpScreen() {
           </View>
           {(formErrors.firstName || formErrors.lastName) && (
             <Text className="text-brand-coral mb-4 text-sm">
-              {formErrors.firstName?.message || formErrors.lastName?.message}
+              {t(formErrors.firstName?.message || formErrors.lastName?.message || "")}
             </Text>
           )}
 
@@ -271,7 +273,7 @@ export default function SignUpScreen() {
               return (
                 <TextInput
                   className="border border-[#E8E6DF] bg-white rounded-xl px-4 py-3 mb-2 text-[#1A1D26]"
-                  placeholder="Email Address"
+                  placeholder={t("auth.email")}
                   placeholderTextColor="#8A8D96"
                   value={value}
                   onChangeText={onChange}
@@ -282,7 +284,7 @@ export default function SignUpScreen() {
           />
           {formErrors.email && (
             <Text className="text-brand-coral mb-4 text-sm">
-              {formErrors.email.message}
+              {t(formErrors.email.message ?? "")}
             </Text>
           )}
           {errors.fields.emailAddress && (
@@ -299,7 +301,7 @@ export default function SignUpScreen() {
                   <View className="relative justify-center mb-2">
                     <TextInput
                       className="border border-[#E8E6DF] bg-white rounded-xl px-4 py-3 pr-12 text-[#1A1D26]"
-                      placeholder="Password"
+                      placeholder={t("auth.password")}
                       placeholderTextColor="#8A8D96"
                       value={value}
                       onChangeText={onChange}
@@ -323,7 +325,7 @@ export default function SignUpScreen() {
           
           {formErrors.password && (
             <Text className="text-brand-coral mb-4 text-sm">
-              {formErrors.password.message}
+              {t(formErrors.password.message ?? "")}
             </Text>
           )}
           {errors.fields.password && (
@@ -340,16 +342,16 @@ export default function SignUpScreen() {
             {isLoading ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text className="text-white font-semibold text-base">Sign Up</Text>
+              <Text className="text-white font-semibold text-base">{t("auth.signUp")}</Text>
             )}
           </TouchableOpacity>
 
           <View className="flex-row justify-center">
             <Text className="text-brand-text-muted">
-              Already have an account?{" "}
+              {t("auth.haveAccount")}{" "}
             </Text>
             <Link href="/sign-in">
-              <Text className="text-brand-blue font-semibold">Sign In</Text>
+              <Text className="text-brand-blue font-semibold">{t("auth.signIn")}</Text>
             </Link>
           </View>
 

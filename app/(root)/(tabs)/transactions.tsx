@@ -1,9 +1,11 @@
 import { DateRangeSheet } from "@/components/DateRangeSheet"
 import { EditTransactionModal } from "@/components/EditTransactionModal"
 import { TransactionRow } from "@/components/TransactionRow"
+import { getCategoryLabel } from "@/constants/categories"
 import { useDeleteTransactions, useDeleteTransactionsBulk } from "@/hooks/mutation/useTransactionMutations"
 import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery"
 import { useTransactionsQuery } from "@/hooks/queries/useTransactionsQuery"
+import { formatDate } from "@/lib/i18n/dateLocale"
 import { Transaction, TransactionType } from "@/lib/services/transactions"
 import {
   ALL_TIME,
@@ -24,6 +26,7 @@ import {
 } from "date-fns"
 import { useRouter } from "expo-router"
 import { useCallback, useMemo, useState } from "react"
+import { useTranslation } from "react-i18next"
 import {
   ActivityIndicator,
   Alert,
@@ -41,6 +44,12 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 
 const FILTERS = ["ALL", "Income", "Expense"] as const
+
+const FILTER_LABEL_KEYS = {
+  ALL: "transactions.filterAll",
+  Income: "transactions.filterIncome",
+  Expense: "transactions.filterExpense",
+} as const
 
 // Transaksi saldo awal dari onboarding bukan pemasukan sungguhan,
 // jadi tidak ikut dihitung di grafik harian.
@@ -76,7 +85,7 @@ function buildChartBuckets(range: DateRange) {
       keyOf: monthKey,
       buckets: eachMonthOfInterval({ start: from, end: to }).map((d) => ({
         key: monthKey(d),
-        label: format(d, "MMM yy"),
+        label: formatDate(d, "MMM yy"),
       })),
     }
   }
@@ -86,16 +95,17 @@ function buildChartBuckets(range: DateRange) {
     keyOf: dayKey,
     buckets: eachDayOfInterval({ start: from, end: to }).map((d) => ({
       key: dayKey(d),
-      label: format(d, "d MMM"),
+      label: formatDate(d, "d MMM"),
     })),
   }
 }
 
 export default function TransactionsScreen() {
   const router = useRouter()
+  const { t, i18n } = useTranslation()
 
-  const [activeFilters, setActiveFilters] = 
-  useState <(typeof FILTERS)[number]>("ALL")
+  const [activeFilters, setActiveFilters] =
+    useState<(typeof FILTERS)[number]>("ALL")
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [exporting, setExporting] = useState(false)
@@ -115,11 +125,11 @@ export default function TransactionsScreen() {
 
 
   const typeFilter: TransactionType | null =
-  activeFilters === "Income"
-  ? "INCOME"
-  : activeFilters === "Expense"
-  ? "EXPENSE"
-  : null
+    activeFilters === "Income"
+      ? "INCOME"
+      : activeFilters === "Expense"
+        ? "EXPENSE"
+        : null
 
   const {
     data: transactions = [],
@@ -132,8 +142,8 @@ export default function TransactionsScreen() {
     accountId: activeAccountId,
     ...toFilterDates(dateRange),
   })
-  const { data: accounts = [], refetch: refetchAccounts} = useAccountsQuery()
-  const { mutateAsync: removeTransactions} = useDeleteTransactions()
+  const { data: accounts = [], refetch: refetchAccounts } = useAccountsQuery()
+  const { mutateAsync: removeTransactions } = useDeleteTransactions()
   const { mutateAsync: removeTransactionsBulk, isPending: bulkDeleting } = useDeleteTransactionsBulk()
 
   const loading = transactionsLoading
@@ -158,12 +168,13 @@ export default function TransactionsScreen() {
       (tx) =>
         tx.description?.toLowerCase().includes(q) ||
         tx.category.toLowerCase().includes(q) ||
+        getCategoryLabel(tx.category).toLowerCase().includes(q) ||
         tx.transfer?.fromName.toLowerCase().includes(q) ||
         tx.transfer?.toName.toLowerCase().includes(q)
     )
-  }, [listItems, search])
+  }, [listItems, search, t])
 
-  const chart = useMemo(() => buildChartBuckets(dateRange), [dateRange])
+  const chart = useMemo(() => buildChartBuckets(dateRange), [dateRange, i18n.language])
 
   const dailyIncomeExpense = useMemo(() => {
     const income = new Map<string, number>()
@@ -195,20 +206,20 @@ export default function TransactionsScreen() {
     if (exporting) return
     setExporting(true)
     try {
-      const {count} = await exportTransactionsToCsv(transactions, {
+      const { count } = await exportTransactionsToCsv(transactions, {
         applyWindow: !rangeActive,
       })
       if (count === 0) {
         Alert.alert(
-          "Nothing to export",
+          t("transactions.nothingToExport"),
           rangeActive
-            ? "No transactions in the selected date range."
-            : "No transactions in the export window."
+            ? t("transactions.noneInRange")
+            : t("transactions.noneInWindow")
         )
       }
     } catch (error) {
       console.error("Expoert failed", error)
-      Alert.alert("Error", "Couldn't export transactions.")
+      Alert.alert(t("common.error"), t("transactions.exportFailed"))
     } finally {
       setExporting(false)
     }
@@ -221,26 +232,26 @@ export default function TransactionsScreen() {
     (tx: Transaction) => {
       const transferId = (tx as Transaction & { transfer_id?: string | null }).transfer_id
       Alert.alert(
-        "Delete transaction",
+        t("transactions.deleteTitle"),
         transferId
-          ? "This will delete the transfer and restore the balance of both accounts."
-          : "Are you sure you want to delete this transaction?",
+          ? t("transactions.deleteTransferMessage")
+          : t("transactions.deleteMessage"),
         [
-          { text: "Cancel", style: "cancel" },
+          { text: t("common.cancel"), style: "cancel" },
           {
-            text: "Delete",
+            text: t("transactions.delete"),
             style: "destructive",
             onPress: async () => {
               const { error: deleteError } = await removeTransactions(tx)
               if (deleteError) {
-                Alert.alert("Error", "Couldn't delete this transaction.")
+                Alert.alert(t("common.error"), t("transactions.deleteFailed"))
               }
             },
           },
         ]
       )
     },
-    [removeTransactions]
+    [removeTransactions, t]
   )
 
   // Ketuk baris -> buka form edit. Saldo awal dikunci karena dikenali lewat
@@ -248,13 +259,13 @@ export default function TransactionsScreen() {
   const handleEdit = useCallback((tx: Transaction) => {
     if (tx.description === STARTING_BALANCE_DESCRIPTION) {
       Alert.alert(
-        "Starting balance",
-        "The starting balance is set during onboarding and can't be edited here."
+        t("transactions.startingBalanceTitle"),
+        t("transactions.startingBalanceMessage")
       )
       return
     }
     setEditingTx(tx)
-  }, [])
+  }, [t])
 
   // Long-pressing any row (when not already selecting) enters selection
   // mode and selects that row.
@@ -288,21 +299,20 @@ export default function TransactionsScreen() {
     )
 
     Alert.alert(
-      "Delete transactions",
-      `Delete ${selected.length} selected transaction${
-        selected.length > 1 ? "s" : ""
-      }? This can't be undone.${
-        hasTransfer ? " Selected transfers are removed from both accounts." : ""
-      }`,
+      t("transactions.deleteSelectedTitle"),
+      (selected.length > 1
+        ? t("transactions.deleteSelectedMany", { count: selected.length })
+        : t("transactions.deleteSelectedOne", { count: selected.length })) +
+      (hasTransfer ? t("transactions.deleteSelectedTransferNote") : ""),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("transactions.delete"),
           style: "destructive",
           onPress: async () => {
             const { error: deleteError } = await removeTransactionsBulk(selected)
             if (deleteError) {
-              Alert.alert("Error", "Couldn't delete the selected transactions.")
+              Alert.alert(t("common.error"), t("transactions.deleteSelectedFailed"))
               return
             }
             exitSelectionMode()
@@ -310,7 +320,7 @@ export default function TransactionsScreen() {
         },
       ]
     )
-  }, [transactions, selectedIds, removeTransactionsBulk, exitSelectionMode])
+  }, [transactions, selectedIds, removeTransactionsBulk, exitSelectionMode, t])
 
   // Stable renderItem reference so FlatList doesn't treat every parent
   // re-render (typing in search, toggling filters, selecting rows) as a
@@ -335,7 +345,9 @@ export default function TransactionsScreen() {
       <View className="px-5 pt-3 pb-2">
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-brand-bg text-xl font-semibold">
-            {selectionMode ? `${selectedIds.size} selected` : "Transaction"}
+            {selectionMode
+              ? t("transactions.selectedCount", { count: selectedIds.size })
+              : t("transactions.title")}
           </Text>
 
           {selectionMode ? (
@@ -343,9 +355,8 @@ export default function TransactionsScreen() {
               <TouchableOpacity
                 onPress={handleDeleteSelected}
                 disabled={selectedIds.size === 0 || bulkDeleting}
-                className={`w-9 h-9 rounded-full items-center justify-center ${
-                  selectedIds.size === 0 ? "bg-white border border-[#E8E6DF]" : "bg-brand-coral"
-                }`}
+                className={`w-9 h-9 rounded-full items-center justify-center ${selectedIds.size === 0 ? "bg-white border border-[#E8E6DF]" : "bg-brand-coral"
+                  }`}
               >
                 {bulkDeleting ? (
                   <ActivityIndicator size="small" color="#fff" />
@@ -392,7 +403,7 @@ export default function TransactionsScreen() {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder="Search transactions"
+            placeholder={t("transactions.searchPlaceholder")}
             placeholderTextColor="#8A8D96"
             className="flex-1 text-xs text-brand-bg"
           />
@@ -408,20 +419,18 @@ export default function TransactionsScreen() {
             <TouchableOpacity
               key={filter}
               onPress={() => setActiveFilters(filter)}
-              className={`px-3.5 py-1.5 rounded-full border ${
-                activeFilters === filter
+              className={`px-3.5 py-1.5 rounded-full border ${activeFilters === filter
                   ? "bg-brand-bg border-brand-bg"
                   : "bg-white border-[#E8E6DF]"
-              }`}
+                }`}
             >
               <Text
-                className={`text-xs ${
-                  activeFilters === filter
+                className={`text-xs ${activeFilters === filter
                     ? "text-white"
                     : "text-brand-text-secondary"
-                }`}
+                  }`}
               >
-                {filter}
+                {t(FILTER_LABEL_KEYS[filter])}
               </Text>
             </TouchableOpacity>
           ))}
@@ -431,38 +440,34 @@ export default function TransactionsScreen() {
           <View className="flex-row gap-2">
             <TouchableOpacity
               onPress={() => setActiveAccountId(null)}
-              className={`px-3.5 py-1.5 rounded-full border ${
-                activeAccountId === null
+              className={`px-3.5 py-1.5 rounded-full border ${activeAccountId === null
                   ? "bg-brand-bg border-brand-bg"
                   : "bg-white border-[#E8E6DF]"
-              }`}
+                }`}
             >
               <Text
-                className={`text-xs ${
-                  activeAccountId === null
+                className={`text-xs ${activeAccountId === null
                     ? "text-white"
                     : "text-brand-text-secondary"
-                }`}
+                  }`}
               >
-                All Accounts
+                {t("transactions.allAccounts")}
               </Text>
             </TouchableOpacity>
             {accounts.map((accounts) => (
-             <TouchableOpacity
+              <TouchableOpacity
                 key={accounts.id}
                 onPress={() => setActiveAccountId(accounts.id)}
-                className={`px-3.5 py-1.5 rounded-full border ${
-                  activeAccountId === accounts.id
+                className={`px-3.5 py-1.5 rounded-full border ${activeAccountId === accounts.id
                     ? "bg-brand-bg border-brand-bg"
                     : "bg-white border-[#E8E6DF]"
-                }`}
+                  }`}
               >
                 <Text
-                  className={`text-xs ${
-                    activeAccountId === accounts.id
+                  className={`text-xs ${activeAccountId === accounts.id
                       ? "text-white"
                       : "text-brand-text-secondary"
-                  }`}
+                    }`}
                 >
                   {accounts.name}
                 </Text>
@@ -474,9 +479,8 @@ export default function TransactionsScreen() {
         <View className="flex-row items-center gap-2 mt-2.5">
           <TouchableOpacity
             onPress={() => setRangeSheetOpen(true)}
-            className={`flex-row items-center gap-1.5 px-3.5 py-1.5 rounded-full border ${
-              rangeActive ? "bg-brand-bg border-brand-bg" : "bg-white border-[#E8E6DF]"
-            }`}
+            className={`flex-row items-center gap-1.5 px-3.5 py-1.5 rounded-full border ${rangeActive ? "bg-brand-bg border-brand-bg" : "bg-white border-[#E8E6DF]"
+              }`}
           >
             <Feather
               name="calendar"
@@ -484,9 +488,8 @@ export default function TransactionsScreen() {
               color={rangeActive ? "#fff" : "#5C5F68"}
             />
             <Text
-              className={`text-xs ${
-                rangeActive ? "text-white" : "text-brand-text-secondary"
-              }`}
+              className={`text-xs ${rangeActive ? "text-white" : "text-brand-text-secondary"
+                }`}
             >
               {formatRangeLabel(dateRange)}
             </Text>
@@ -510,15 +513,15 @@ export default function TransactionsScreen() {
         <View className="flex-1 items-center justify-center px-10">
           <Feather name="alert-circle" size={32} color="#FF6B4A" />
           <Text className="text-brand-text-muted text-sm mt-3 text-center">
-            Couldn&apos;t load transactions.
-            </Text>
+            {t("transactions.loadError")}
+          </Text>
           <TouchableOpacity
             onPress={() => loadData()}
             className="mt-4 bg-brand-bg rounded-full px-4 py-2"
           >
-            <Text className="text-white text-xs font-medium">Retry</Text>
-            </TouchableOpacity>
-          </View>
+            <Text className="text-white text-xs font-medium">{t("transactions.retry")}</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <FlatList
           data={filterTransactions}
@@ -544,43 +547,41 @@ export default function TransactionsScreen() {
             transactions.length > 0 && !selectionMode ? (
               <View className="bg-white rounded-2xl border border-[#E8E6DF] p-4 mb-4">
                 <View className="flex-row justify-between items-center mb-3">
-                  <Text className="text-brand-bg text-xs font-medium">
-                    {chart.monthly ? "Monthly" : "Daily"} income vs expense
-                  </Text>
+
                   <View className="flex-row gap-3">
                     <View className="flex-row items-center gap-1">
                       <View className="w-2 h-2 rounded-full bg-brand-success" />
                       <Text className="text-[10px] text-brand-text-secondary">
-                        Income
-                        </Text>
-                      </View>
+                        {t("transactions.income")}
+                      </Text>
+                    </View>
 
                     <View className="flex-row items-center gap-1">
                       <View className="w-2 h-2 rounded-full bg-brand-coral" />
                       <Text className="text-[10px] text-brand-text-secondary">
-                        Expense    
-                          </Text>
-                          </View>
-                        </View>
+                        {t("transactions.expense")}
+                      </Text>
                     </View>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        <BarChart
-                          data={dailyIncomeExpense}
-                          width={Math.max(dailyIncomeExpense.length * 9, 280)}
-                          height={120}
-                          barWidth={6}
-                          spacing={4}
-                          hideYAxisText
-                          xAxisColor="#E8E6DF"
-                          yAxisColor="transparent"
-                          rulesColor="#F0EEE7"
-                          noOfSections={3}
-                          xAxisLabelTextStyle={{ color: "#8A8D96", fontSize: 7 }}
-                          isThreeD={false}
-                          roundedTop
-                        />
-                    </ScrollView>
                   </View>
+                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <BarChart
+                    data={dailyIncomeExpense}
+                    width={Math.max(dailyIncomeExpense.length * 9, 280)}
+                    height={120}
+                    barWidth={6}
+                    spacing={4}
+                    hideYAxisText
+                    xAxisColor="#E8E6DF"
+                    yAxisColor="transparent"
+                    rulesColor="#F0EEE7"
+                    noOfSections={3}
+                    xAxisLabelTextStyle={{ color: "#8A8D96", fontSize: 7 }}
+                    isThreeD={false}
+                    roundedTop
+                  />
+                </ScrollView>
+              </View>
             ) : null
           }
           ListEmptyComponent={
@@ -588,15 +589,15 @@ export default function TransactionsScreen() {
               <Feather name="inbox" size={32} color="#BDC3C7" />
               <Text className="text-brand-text-muted text-sm mt-3">
                 {search
-                  ? "No matching transactions"
+                  ? t("transactions.emptySearch")
                   : rangeActive
-                  ? "No transactions in this range"
-                  : "No transactions yet"}
+                    ? t("transactions.emptyRange")
+                    : t("transactions.empty")}
               </Text>
             </View>
           }
-          />
-        )}
+        />
+      )}
 
 
       <DateRangeSheet
@@ -613,7 +614,7 @@ export default function TransactionsScreen() {
         onSaved={() => setEditingTx(null)}
       />
 
-        {/* Add trancation FAB - nvaigate to the Add tab */}
+      {/* Add trancation FAB - nvaigate to the Add tab */}
       {/* <TouchableOpacity
         onPress={() => router.push("/(root)/(tabs)/add-transaction")}
         className="absolute right-5 w-14 h-14 rounded-full bg-brand-bg items-center justify-center shadow-lg"

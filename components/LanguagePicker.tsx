@@ -24,7 +24,7 @@ export function LanguagePicker({
                     <Text className="text-brand-bg text-base font-semibold">
                         {t("language.pickerTitle")}
                     </Text>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={onClose}>
                         <Text className="text-brand-text-secondary text-sm">
                             {t("common.cancel")}
                         </Text>
@@ -38,7 +38,7 @@ export function LanguagePicker({
                             onPress={() => onSelect(item.code)}
                             className="flex-row items-center px-5 py-3.5 border-b border-[#F0EDE6]"
                         >
-                            <Text className="text-brand-bg text-sm flex-1">(item.label)</Text>
+                            <Text className="text-brand-bg text-sm flex-1">{item.label}</Text>
                             {item.code === selected && (
                                 <Feather name="check" size={16} color="#4A9EFF" />
                             )}
