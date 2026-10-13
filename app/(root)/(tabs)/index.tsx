@@ -14,6 +14,7 @@ import { isSameMonth } from "date-fns"
 import { Image } from "expo-image"
 import { useRouter } from "expo-router"
 import { useTranslation } from "react-i18next"
+import { useThemeColors } from "@/components/ThemeProvider"
 import { useMemo, useState } from "react"
 import {
   ActivityIndicator,
@@ -71,6 +72,7 @@ const QUICK_ACTIONS = [
 export default function HomeScreen() {
   const { user } = useUser()
   const { t } = useTranslation()
+  const colors = useThemeColors()
   const router = useRouter()
   const currency = useUserStore((s) => s.currency)
 
@@ -154,16 +156,16 @@ export default function HomeScreen() {
   }, [monthTransactions])
 
   return (
-    <SafeAreaView className="flex-1 bg-brand-bg" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-hero" edges={["top"]}>
       <ScrollView
-        className="flex-1 bg-brand-body"
+        className="flex-1 bg-page"
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         {/* Dark hero header */}
-        <View className="bg-brand-bg rounded-b-[28px] px-5 pt-5 pb-[22px]">
+        <View className="bg-hero rounded-b-[28px] px-5 pt-5 pb-[22px]">
           <View className="flex-row justify-between items-center mb-[22px]">
             <Image
               source={require("../../../assets/images/welth-light.png")}
@@ -227,9 +229,9 @@ export default function HomeScreen() {
                   action.action === "transfer"
                     ? setTransferOpen(true)
                     : router.push({
-                      pathname: "/(root)/(tabs)/add-transaction",
-                      params: { action: action.action },
-                    })
+                        pathname: "/(root)/(tabs)/add-transaction",
+                        params: { action: action.action },
+                      })
                 }
                 activeOpacity={0.75}
                 className="flex-1 bg-brand-surface rounded-2xl border border-brand-surface-border py-4 items-center gap-2"
@@ -252,12 +254,12 @@ export default function HomeScreen() {
         <View className="px-5 pt-[18px] pb-5">
           <TouchableOpacity
             onPress={() => router.push("/(root)/(tabs)/assistant")}
-            className="bg-white rounded-[18px] border border-[#E8E6DF] p-3.5 flex-row items-center gap-2.5 mb-[18px]"
+            className="bg-card rounded-[18px] border border-line p-3.5 flex-row items-center gap-2.5 mb-[18px]"
           >
             <View className="w-[26px] h-[26px] rounded-full bg-[#4A9EFF1A] items-center justify-center">
               <View className="w-[7px] h-[7px] rounded-full bg-brand-blue" />
             </View>
-            <Text className="text-brand-text-muted text-[13px] flex-1">
+            <Text className="text-subtle text-[13px] flex-1">
               {t("home.askAi")}
             </Text>
             <Feather name="arrow-right" size={16} color="#4A9EFF" />
@@ -266,10 +268,10 @@ export default function HomeScreen() {
           <TouchableOpacity
             onPress={() => setBudgetModalOpen(true)}
             activeOpacity={0.85}
-            className="bg-white rounded-[18px] border border-[#E8E6DF] p-4 mb-[18px]"
+            className="bg-card rounded-[18px] border border-line p-4 mb-[18px]"
           >
             <View className="flex-row items-center justify-between mb-2.5">
-              <Text className="text-[#1A1D26] text-sm font-medium">
+              <Text className="text-ink text-sm font-medium">
                 {t("home.monthlyBudget")}
               </Text>
               <Feather name="edit-2" size={13} color="#8A8D96" />
@@ -283,7 +285,7 @@ export default function HomeScreen() {
                     total: formatPrice(budgets.amount, currency),
                   })}
                 </Text>
-                <View className="h-2 rounded-full bg-[#F0EEE7] overflow-hidden">
+                <View className="h-2 rounded-full bg-line-soft overflow-hidden">
                   <View
                     className="h-2 rounded-full"
                     style={{
@@ -311,13 +313,13 @@ export default function HomeScreen() {
           <TouchableOpacity
             onPress={() => router.push("/(root)/report")}
             activeOpacity={0.85}
-            className="bg-white rounded-[18px] border border-[#E8E6DF] p-4 mb-[18px] flex-row items-center gap-3"
+            className="bg-card rounded-[18px] border border-line p-4 mb-[18px] flex-row items-center gap-3"
           >
             <View className="w-9 h-9 rounded-full bg-[#4A9EFF1A] items-center justify-center">
               <Feather name="bar-chart-2" size={16} color="#4A9EFF" />
             </View>
             <View className="flex-1">
-              <Text className="text-[#1A1D26] text-sm font-medium">
+              <Text className="text-ink text-sm font-medium">
                 {t("home.monthlyReport")}
               </Text>
               <Text className="text-brand-text-secondary text-xs mt-0.5">
@@ -328,8 +330,8 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           {expenseBreakedown.length > 0 && (
-            <View className="bg-white rounded-[18px] border border-[#E8E6DF] p-4 mb-[18px]">
-              <Text className="text-[#1A1D26] text-sm font-medium mb-3">
+            <View className="bg-card rounded-[18px] border border-line p-4 mb-[18px]">
+              <Text className="text-ink text-sm font-medium mb-3">
                 {t("home.expenseBreakdown")}
               </Text>
               <View className="flex-row items-center">
@@ -340,7 +342,7 @@ export default function HomeScreen() {
                   }))}
                   radius={60}
                   innerRadius={38}
-                  innerCircleColor="#fff"
+                  innerCircleColor={colors.card}
                 />
                 <View className="flex-1 ml-4 gap-1.5">
                   {expenseBreakedown.slice(0, 6).map((c) => (
@@ -357,6 +359,9 @@ export default function HomeScreen() {
                           {getCategoryLabel(c.category)}
                         </Text>
                       </View>
+                      <Text className="text-ink text-[11px] font-medium">
+                        {formatPrice(c.amount, currency)}
+                      </Text>
                     </View>
                   ))}
                 </View>
@@ -365,7 +370,7 @@ export default function HomeScreen() {
           )}
 
           <View className="flex-row justify-between items-center mb-3">
-            <Text className="text-[#1A1D26] text-sm font-medium">
+            <Text className="text-ink text-sm font-medium">
               {t("home.recentTransactions")}
             </Text>
             <TouchableOpacity
@@ -381,8 +386,8 @@ export default function HomeScreen() {
             </View>
           ) : recentTransactions.length === 0 ? (
             <View className="items-center py-6">
-              <Feather name="inbox" size={28} color="#BDC3C7" />
-              <Text className="text-brand-text-muted text-sm mt-3">
+              <Feather name="inbox" size={28} color={colors.subtle} />
+              <Text className="text-subtle text-sm mt-3">
                 {t("home.noTransactions")}
               </Text>
             </View>

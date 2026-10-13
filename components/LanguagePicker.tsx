@@ -19,13 +19,13 @@ export function LanguagePicker({
 
     return (
         <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-            <SafeAreaView className="flex-1 bg-brand-body" edges={["top"]}>
+            <SafeAreaView className="flex-1 bg-page" edges={["top"]}>
                 <View className="flex-row items-center justify-between px-5 pt-4 pb-3">
-                    <Text className="text-brand-bg text-base font-semibold">
+                    <Text className="text-ink text-base font-semibold">
                         {t("language.pickerTitle")}
                     </Text>
                     <TouchableOpacity onPress={onClose}>
-                        <Text className="text-brand-text-secondary text-sm">
+                        <Text className="text-subtle text-sm">
                             {t("common.cancel")}
                         </Text>
                     </TouchableOpacity>
@@ -36,15 +36,14 @@ export function LanguagePicker({
                     renderItem={({ item }) => (
                         <TouchableOpacity
                             onPress={() => onSelect(item.code)}
-                            className="flex-row items-center px-5 py-3.5 border-b border-[#F0EDE6]"
+                            className="flex-row items-center px-5 py-3.5 border-b border-line-soft"
                         >
-                            <Text className="text-brand-bg text-sm flex-1">{item.label}</Text>
+                            <Text className="text-ink text-sm flex-1">{item.label}</Text>
                             {item.code === selected && (
                                 <Feather name="check" size={16} color="#4A9EFF" />
                             )}
                         </TouchableOpacity>
                     )}
-
                 />
             </SafeAreaView>
         </Modal>

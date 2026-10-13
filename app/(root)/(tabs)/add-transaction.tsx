@@ -7,6 +7,7 @@ import { VoiceRecorderModal } from "@/components/VoiceRecorderModal";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, CategoryKey, getCategoryLabel } from "@/constants/categories";
 import { formatDate } from "@/lib/i18n/dateLocale";
 import { useTranslation } from "react-i18next";
+import { useThemeColors } from "@/components/ThemeProvider"
 import { useCreateTransactions } from "@/hooks/mutation/useTransactionMutations";
 import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery";
 import { useSupabase } from "@/hooks/useSupabase";
@@ -84,6 +85,7 @@ const DEFAULT_VALUES = (accounts: Account[]): TransactionFormValues => ({
 export default function AddTransaction() {
   const {user} = useUser()
   const { t } = useTranslation()
+  const colors = useThemeColors()
   const router = useRouter()
   const params = useLocalSearchParams<{action?: string}>()
   const keyboardHeight = useKeyboardHeight()
@@ -228,9 +230,9 @@ export default function AddTransaction() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-brand-body" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-page" edges={["top"]}>
       <View className="px-5 pt-3 pb-2">
-        <Text className="text-brand-bg text-xl font-semibold">
+        <Text className="text-ink text-xl font-semibold">
           {t("addTransaction.title")}
           </Text>
       </View>
@@ -247,14 +249,14 @@ export default function AddTransaction() {
         ): accountsError ? (
           <View className="flex-1 items-center justify-center px-10">
             <Feather name="alert-circle" size={32} color="#FF6B4A" />
-            <Text className="text-brand-text-muted text-sm mt-3 text-center">
+            <Text className="text-subtle text-sm mt-3 text-center">
               {t("profile.loadAccountsFailed")}
             </Text>
           </View>
         ): accounts.length === 0 ? (
           <View className="flex-1 items-center justify-center px-10">
             <Feather name="alert-circle" size={32} color="#FF6B4A" />
-            <Text className="text-brand-text-muted text-sm mt-3 text-center">
+            <Text className="text-subtle text-sm mt-3 text-center">
               {t("addTransaction.needAccount")}
             </Text>
           </View>
@@ -286,7 +288,7 @@ export default function AddTransaction() {
             </View>
 
             {/* Type toggle */}
-              <View className="flex-row bg-white rounded-xl border border-[#E8E6DF] p-1 mb-4">
+              <View className="flex-row bg-card rounded-xl border border-line p-1 mb-4">
               {TYPE_OPTIONS.map((opt) => (
                 <TouchableOpacity
                 key={opt.key}
@@ -300,13 +302,13 @@ export default function AddTransaction() {
                   )
                 }}
                 className={`flex-1 py-2 rounded-lg items-center ${
-                type === opt.key ? "bg-brand-bg" : ""
+                type === opt.key ? "bg-solid" : ""
                   }`}
                 >
                   <Text
                     className={`text-xs font-medium ${
                       type === opt.key
-                        ? "text-white"
+                        ? "text-on-solid"
                         : "text-brand-text-secondary"
                     }`}>
                       {t(opt.labelKey)}
@@ -316,7 +318,7 @@ export default function AddTransaction() {
             </View>
 
             
-            <Text className="text-brand-bg text-xs font-medium mb-1.5">
+            <Text className="text-ink text-xs font-medium mb-1.5">
               {t("addTransaction.amount")}
             </Text>
             <Controller
@@ -333,7 +335,7 @@ export default function AddTransaction() {
               placeholder="0"
               placeholderTextColor="#8A8D96"
               keyboardType="numeric"
-              className="bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 text-sm text-brand-bg"
+              className="bg-card border border-line rounded-xl px-4 py-3.5 text-sm text-ink"
               />
               )}
             />
@@ -345,7 +347,7 @@ export default function AddTransaction() {
             <View className="mb-4"/>
 
             {/* Category */}
-            <Text className="text-brand-bg text-xs font-medium mb-1.5">
+            <Text className="text-ink text-xs font-medium mb-1.5">
             {t("addTransaction.category")}
             </Text>
             <View>
@@ -361,7 +363,7 @@ export default function AddTransaction() {
             </View>
 
               {/* Account */}
-              <Text className="text-brand-bg text-xs font-medium mb-1.5">
+              <Text className="text-ink text-xs font-medium mb-1.5">
                 {t("addTransaction.account")}
               </Text>
               <View className="mb-1">
@@ -379,21 +381,21 @@ export default function AddTransaction() {
               <View className="mb-3"/>
 
               {/* Date */}
-              <Text className="text-brand-bg text-xs font-medium mb-1.5">
+              <Text className="text-ink text-xs font-medium mb-1.5">
                 {t("addTransaction.date")}
               </Text>
               <TouchableOpacity
               onPress={() => setDatePickerOpen((v) => !v)}
-               className="flex-row items-center justify-between bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-1"
+               className="flex-row items-center justify-between bg-card border border-line rounded-xl px-4 py-3.5 mb-1"
               >
-                 <Text className="text-sm text-brand-bg">
+                 <Text className="text-sm text-ink">
                   {formatDate(date, "d MMM yyyy")}
                 </Text>
-                <Feather name="calendar" size={16} color="#5C5F68" />
+                <Feather name="calendar" size={16} color={colors.icon} />
               </TouchableOpacity>
 
               {datePickerOpen && (
-                <View className="bg-white border border-[#E8E6DF] rounded-xl mb-4 overflow-hidden">
+                <View className="bg-card border border-line rounded-xl mb-4 overflow-hidden">
                   <CalendarPicker
                   value={date}
                   maximumDate={new Date()}
@@ -407,7 +409,7 @@ export default function AddTransaction() {
               {!datePickerOpen && <View className="mb-4"/>}
 
               {/* Description */}
-              <Text className="text-brand-bg text-xs font-medium mb-1.5">
+              <Text className="text-ink text-xs font-medium mb-1.5">
                 {t("addTransaction.description")}
               </Text>
               <Controller
@@ -420,7 +422,7 @@ export default function AddTransaction() {
                 onBlur={onBlur}
                 placeholder={t("addTransaction.descriptionPlaceholder")}
                 placeholderTextColor="#8A8D96"
-                className="bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-4 text-sm text-brand-bg"
+                className="bg-card border border-line rounded-xl px-4 py-3.5 mb-4 text-sm text-ink"
                 />
               )}
               />
@@ -432,10 +434,10 @@ export default function AddTransaction() {
               <TouchableOpacity
               onPress={handleSubmit(onSubmit)}
               disabled={saving}
-              className="bg-brand-bg rounded-xl py-4 items-center mb-2"
+              className="bg-solid rounded-xl py-4 items-center mb-2"
               activeOpacity={0.85}
               >
-                <Text className="text-white text-sm font-semibold">
+                <Text className="text-on-solid text-sm font-semibold">
                   {saving ? t("addTransaction.saving") : t("addTransaction.save")}
                 </Text>
               </TouchableOpacity>
@@ -446,9 +448,9 @@ export default function AddTransaction() {
 
       {scanning && (
         <View className="absolute inset-0 items-center justify-center bg-black/40">
-          <View className="bg-white rounded-2xl px-6 py-5 items-center">
+          <View className="bg-card rounded-2xl px-6 py-5 items-center">
             <ActivityIndicator color="#4A9EFF" />
-            <Text className="text-brand-bg text-sm mt-3">{t("addTransaction.readingReceipt")}</Text>
+            <Text className="text-ink text-sm mt-3">{t("addTransaction.readingReceipt")}</Text>
           </View>
         </View>
       )}

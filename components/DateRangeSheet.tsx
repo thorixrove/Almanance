@@ -10,6 +10,7 @@ import {
 import "dayjs/locale/id"
 import { formatDate } from "@/lib/i18n/dateLocale"
 import { useTranslation } from "react-i18next"
+import { useThemeColors, useThemeScheme } from "@/components/ThemeProvider"
 import { useEffect, useState } from "react"
 import { Text, TouchableOpacity, View } from "react-native"
 import DateTimePicker, { useDefaultStyles } from "react-native-ui-datepicker"
@@ -26,7 +27,9 @@ export function DateRangeSheet({
     onApply: (range: DateRange) => void
 }) {
     const { t, i18n } = useTranslation()
-    const defaultStyles = useDefaultStyles("light")
+    const scheme = useThemeScheme()
+    const colors = useThemeColors()
+    const defaultStyles = useDefaultStyles(scheme)
     const presetOptions = PRESET_OPTIONS.map((o) => ({
         key: o.key,
         label: t(o.labelKey),
@@ -103,7 +106,7 @@ export function DateRangeSheet({
                             }}
                             styles={{
                                 ...defaultStyles,
-                                today: { borderWidth: 1, borderColor: "#1A1D26" },
+                                today: { borderWidth: 1, borderColor: colors.ink },
                             }}
                         />
                     </View>

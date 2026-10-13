@@ -6,6 +6,7 @@ import {
 } from "@/constants/categories"
 import { formatDate } from "@/lib/i18n/dateLocale"
 import { useTranslation } from "react-i18next"
+import { useThemeColors } from "@/components/ThemeProvider"
 import { COLORS } from "@/constants/theme"
 import { useUpdateTransaction } from "@/hooks/mutation/useTransactionMutations"
 import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery"
@@ -45,6 +46,7 @@ export function EditTransactionModal({
   onSaved: () => void
 }) {
   const { t } = useTranslation()
+  const colors = useThemeColors()
   const { data: accounts = [] } = useAccountsQuery()
   const { mutateAsync: updateTransaction, isPending: saving } =
     useUpdateTransaction()
@@ -139,10 +141,10 @@ export function EditTransactionModal({
       <TouchableOpacity
         onPress={handleSave}
         disabled={saving}
-        className="bg-brand-bg rounded-xl py-4 items-center"
+        className="bg-solid rounded-xl py-4 items-center"
         activeOpacity={0.85}
       >
-        <Text className="text-white text-sm font-semibold">
+        <Text className="text-on-solid text-sm font-semibold">
           {saving ? t("common.saving") : t("editTransaction.saveChanges")}
         </Text>
       </TouchableOpacity>
@@ -157,18 +159,18 @@ export function EditTransactionModal({
       footer={footer}
     >
         {/* Type */}
-        <View className="flex-row bg-white rounded-xl border border-[#E8E6DF] p-1 mb-4">
+        <View className="flex-row bg-card rounded-xl border border-line p-1 mb-4">
           {TYPE_OPTIONS.map((opt) => (
             <TouchableOpacity
               key={opt.key}
               onPress={() => handleTypeChange(opt.key)}
               className={`flex-1 py-2 rounded-lg items-center ${
-                type === opt.key ? "bg-brand-bg" : ""
+                type === opt.key ? "bg-solid" : ""
               }`}
             >
               <Text
                 className={`text-xs font-medium ${
-                  type === opt.key ? "text-white" : "text-brand-text-secondary"
+                  type === opt.key ? "text-on-solid" : "text-brand-text-secondary"
                 }`}
               >
                 {t(opt.labelKey)}
@@ -178,7 +180,7 @@ export function EditTransactionModal({
         </View>
 
         {/* Amount */}
-        <Text className="text-brand-bg text-xs font-medium mb-1.5">{t("addTransaction.amount")}</Text>
+        <Text className="text-ink text-xs font-medium mb-1.5">{t("addTransaction.amount")}</Text>
         <TextInput
           value={amount}
           onChangeText={(v) => {
@@ -188,11 +190,11 @@ export function EditTransactionModal({
           placeholder="0"
           placeholderTextColor={COLORS.placeholder}
           keyboardType="numeric"
-          className="bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-4 text-sm text-brand-bg"
+          className="bg-card border border-line rounded-xl px-4 py-3.5 mb-4 text-sm text-ink"
         />
 
         {/* Category */}
-        <Text className="text-brand-bg text-xs font-medium mb-1.5">
+        <Text className="text-ink text-xs font-medium mb-1.5">
           {t("addTransaction.category")}
         </Text>
         <View className="mb-4">
@@ -208,7 +210,7 @@ export function EditTransactionModal({
         </View>
 
         {/* Account */}
-        <Text className="text-brand-bg text-xs font-medium mb-1.5">{t("addTransaction.account")}</Text>
+        <Text className="text-ink text-xs font-medium mb-1.5">{t("addTransaction.account")}</Text>
         <View className="mb-4">
           <PillGroup
             options={accounts.map((a) => ({ key: a.id, label: a.name }))}
@@ -218,19 +220,19 @@ export function EditTransactionModal({
         </View>
 
         {/* Date */}
-        <Text className="text-brand-bg text-xs font-medium mb-1.5">{t("addTransaction.date")}</Text>
+        <Text className="text-ink text-xs font-medium mb-1.5">{t("addTransaction.date")}</Text>
         <TouchableOpacity
           onPress={() => setDatePickerOpen((v) => !v)}
-          className="flex-row items-center justify-between bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-4"
+          className="flex-row items-center justify-between bg-card border border-line rounded-xl px-4 py-3.5 mb-4"
         >
-          <Text className="text-sm text-brand-bg">
+          <Text className="text-sm text-ink">
             {formatDate(date, "d MMM yyyy")}
           </Text>
-          <Feather name="calendar" size={16} color="#5C5F68" />
+          <Feather name="calendar" size={16} color={colors.icon} />
         </TouchableOpacity>
 
         {datePickerOpen && (
-          <View className="bg-white border border-[#E8E6DF] rounded-xl mb-4 overflow-hidden">
+          <View className="bg-card border border-line rounded-xl mb-4 overflow-hidden">
             <CalendarPicker
               value={date}
               maximumDate={new Date()}
@@ -243,7 +245,7 @@ export function EditTransactionModal({
         )}
 
         {/* Description */}
-        <Text className="text-brand-bg text-xs font-medium mb-1.5">
+        <Text className="text-ink text-xs font-medium mb-1.5">
           {t("addTransaction.description")}
         </Text>
         <TextInput
@@ -251,7 +253,7 @@ export function EditTransactionModal({
           onChangeText={setDescription}
           placeholder={t("addTransaction.descriptionPlaceholder")}
           placeholderTextColor={COLORS.placeholder}
-          className="bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-4 text-sm text-brand-bg"
+          className="bg-card border border-line rounded-xl px-4 py-3.5 mb-4 text-sm text-ink"
         />
     </BottomSheet>
   )

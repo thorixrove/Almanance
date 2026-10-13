@@ -182,7 +182,7 @@ export function BottomSheet({
  
         <Animated.View style={sheetStyle}>
           <View
-            className="bg-brand-body rounded-t-2xl"
+            className="bg-page rounded-t-2xl"
             style={{
               paddingBottom: keyboardHeight > 0 ? 16 : insets.bottom + 16,
             }}
@@ -190,8 +190,8 @@ export function BottomSheet({
             {/* Area geser: handle + judul */}
             <GestureDetector gesture={pan}>
               <View collapsable={false} className="px-5 pt-2.5 pb-4">
-                <View className="self-center w-10 h-1 rounded-full bg-[#D5D2C8] mb-4" />
-                <Text className="text-brand-bg text-base font-semibold">
+                <View className="self-center w-10 h-1 rounded-full bg-line mb-4" />
+                <Text className="text-ink text-base font-semibold">
                   {title}
                 </Text>
               </View>

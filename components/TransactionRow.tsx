@@ -5,6 +5,7 @@ import { formatPrice } from "@/lib/utils";
 import { Feather } from "@expo/vector-icons";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
+import { useThemeColors } from "@/components/ThemeProvider";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import { Text, TouchableOpacity, View } from "react-native";
 import Animated, {
@@ -88,6 +89,7 @@ function TransactionRowComponent({
     onToggleSelect?: (tx: Transaction) => void
 }) {
     const { t } = useTranslation()
+    const colors = useThemeColors()
     const config = getCategoryConfig(tx.category)
     const categoryLabel = getCategoryLabel(tx.category)
     const transfer = isTransfer(tx)
@@ -97,11 +99,11 @@ function TransactionRowComponent({
 
     const row = (
     <View
-      className="flex-row items-center bg-white rounded-2xl border border-[#E8E6DF] pl-3 pr-3.5 py-4"
+      className="flex-row items-center bg-card rounded-2xl border border-line pl-3 pr-3.5 py-4"
       style={{
         borderLeftWidth: 3,
         borderLeftColor: config.color,
-        borderColor: selected ? "#4A9EFF" : "#E8E6DF",
+        borderColor: selected ? "#4A9EFF" : colors.line,
         borderWidth: selected ? 1.5 : undefined,
       }}
     >
@@ -126,7 +128,7 @@ function TransactionRowComponent({
       </View>
 
       <View className="flex-1">
-        <Text className="text-brand-bg text-sm font-medium" numberOfLines={1}>
+        <Text className="text-ink text-sm font-medium" numberOfLines={1}>
           {tx.transfer
             ? `${tx.transfer.fromName} → ${tx.transfer.toName}`
             : tx.description || categoryLabel}

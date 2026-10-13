@@ -5,6 +5,9 @@ import { useRouter } from 'expo-router'
 import { AccountModal } from "@/components/AccountModal";
 import { CurrencyPicker } from '@/components/CurrencyPicker'
 import { LanguagePicker } from '@/components/LanguagePicker'
+import { ThemePicker } from '@/components/ThemePicker'
+import { useThemeColors } from '@/components/ThemeProvider'
+import { type ThemeMode } from '@/lib/theme'
 import { LANGUAGES, type Language } from '@/lib/i18n'
 import { useTranslation } from 'react-i18next'
 import { useSetDefaultAccount  } from '@/hooks/mutation/useAccountMutations'
@@ -29,7 +32,7 @@ const ACCOUNT_ICON: Record<AccountType, keyof typeof Feather.glyphMap> = {
 
 function SectionLabel({ children}: { children: string}) {
   return(
-    <Text className="text-brand-text-muted text-[11px] uppercase tracking-wide mb-2 mt-6 mx-5">
+    <Text className="text-subtle text-[11px] uppercase tracking-wide mb-2 mt-6 mx-5">
       {children}
     </Text>
   )
@@ -50,18 +53,19 @@ function Row({
   showChevron?: boolean
   danger?: boolean
 }) {
+  const colors = useThemeColors()
   return(
       <TouchableOpacity
       onPress={onPress}
       disabled={!onPress}
-      className="flex-row items-center bg-white px-4 py-3.5 border-b border-[#F0EEE7] last:border-b-0"
+      className="flex-row items-center bg-card px-4 py-3.5 border-b border-line-soft last:border-b-0"
     >
-          <View className="w-8 h-8 rounded-full bg-[#F5F4F0] items-center justify-center mr-3">
-        <Feather name={icon} size={15} color={danger ? "#FF6B4A" : "#5C5F68"} />
+          <View className="w-8 h-8 rounded-full bg-page items-center justify-center mr-3">
+        <Feather name={icon} size={15} color={danger ? "#FF6B4A" : colors.icon} />
       </View>
       <Text
         className={`flex-1 text-sm ${
-          danger ? "text-brand-coral" : "text-brand-bg"
+          danger ? "text-brand-coral" : "text-ink"
         }`}
       >
         {label}
@@ -70,7 +74,7 @@ function Row({
         <Text className="text-brand-text-secondary text-xs mr-2">{value}</Text>
       )}
       {showChevron && onPress && (
-        <Feather name="chevron-right" size={16} color="#BDC3C7" />
+        <Feather name="chevron-right" size={16} color={colors.subtle} />
       )}
   </TouchableOpacity>
   )
@@ -82,11 +86,14 @@ export default function ProfileScreen() {
   const {signOut} = useAuth()
   const router = useRouter()
   const { t } = useTranslation()
+  const colors = useThemeColors()
   const supabase = useSupabase()
   const currency = useUserStore((state) => state.currency)
   const setCurrency = useUserStore((state) => state.setCurrency)
   const biometricEnabled = useUserStore((state) => state.biometricEnabled)
   const setBiometricLock = useUserStore((state) => state.setBiometricLock)
+  const themeMode = useUserStore((state) => state.themeMode)
+  const setThemeMode = useUserStore((state) => state.setThemeMode)
   const language = useUserStore((state) => state.language)
   const setLanguage = useUserStore((state) => state.setLanguage)
 
@@ -94,6 +101,7 @@ export default function ProfileScreen() {
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false);
   const [languagePickerOpen, setLanguagePickerOpen] = useState(false);
+  const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const {
@@ -197,6 +205,15 @@ export default function ProfileScreen() {
     }
   }
 
+  const handleThemeSelect = async (mode: ThemeMode) => {
+    setThemePickerOpen(false)
+    try {
+      await setThemeMode(mode)
+    } catch {
+      Alert.alert(t("common.error"), t("theme.updateFailed"))
+    }
+  }
+
   const handleLanguageSelect = async (code: Language) => {
     setLanguagePickerOpen(false)
     try {
@@ -222,17 +239,17 @@ export default function ProfileScreen() {
   }
 
     return (
-      <SafeAreaView className='flex-1 bg-brand-body' edges={["top"]}>
+      <SafeAreaView className='flex-1 bg-page' edges={["top"]}>
           <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         <View className="px-5 pt-3 pb-2">
-          <Text className="text-brand-bg text-xl font-semibold">{t("profile.title")}</Text>
+          <Text className="text-ink text-xl font-semibold">{t("profile.title")}</Text>
         </View>
 
         {/* user card */}
-      <View className='mx-5 mt-2 bg-brand-bg rounded-2xl px-5 py-6 items-center'>
+      <View className='mx-5 mt-2 bg-hero rounded-2xl px-5 py-6 items-center'>
         <TouchableOpacity
         onPress={handlePickAvatar}
         disabled={uploadingAvatar}
@@ -273,14 +290,14 @@ export default function ProfileScreen() {
 
       {/* Accounts */}
       <SectionLabel>{t("profile.accounts")}</SectionLabel>
-      <View className="mx-5 rounded-2xl overflow-hidden border border-[#E8E6DF]">
+      <View className="mx-5 rounded-2xl overflow-hidden border border-line">
           {loadingAccounts ? (
-            <View className="bg-white px-4 py-5 items-center">
-              <ActivityIndicator color="#5C5F68" />
+            <View className="bg-card px-4 py-5 items-center">
+              <ActivityIndicator color={colors.icon} />
               </View>
           ): accountsError ? (
-            <View className="bg-white px-4 py-5 items-center">
-              <Text className="text-brand-text-muted text-xs">
+            <View className="bg-card px-4 py-5 items-center">
+              <Text className="text-subtle text-xs">
                 {t("profile.loadAccountsFailed")}
               </Text>
               </View>
@@ -310,7 +327,13 @@ export default function ProfileScreen() {
 
       {/* Preferences */}
       <SectionLabel>{t("profile.preferences")}</SectionLabel>
-      <View className="mx-5 rounded-2xl overflow-hidden border border-[#E8E6DF]">
+      <View className="mx-5 rounded-2xl overflow-hidden border border-line">
+          <Row
+            icon="moon"
+            label={t("profile.appearance")}
+            value={t(`theme.${themeMode}`)}
+            onPress={() => setThemePickerOpen(true)}
+          />
           <Row
             icon="globe"
             label={t("profile.language")}
@@ -325,11 +348,11 @@ export default function ProfileScreen() {
           />
 
 
-           <View className="flex-row items-center bg-white px-4 py-3.5">
-            <View className="w-8 h-8 rounded-full bg-[#F5F4F0] items-center justify-center mr-3">
-              <Feather name="lock" size={15} color="#5C5F68" />
+           <View className="flex-row items-center bg-card px-4 py-3.5">
+            <View className="w-8 h-8 rounded-full bg-page items-center justify-center mr-3">
+              <Feather name="lock" size={15} color={colors.icon} />
             </View>
-            <Text className="flex-1 text-sm text-brand-bg">{t("profile.biometricLock")}</Text>
+            <Text className="flex-1 text-sm text-ink">{t("profile.biometricLock")}</Text>
             <Switch
               value={biometricEnabled === true}
               onValueChange={handleToggleBiometric}
@@ -339,7 +362,7 @@ export default function ProfileScreen() {
 
       {/* Account action */}
       <SectionLabel>{t("profile.accounts")}</SectionLabel>
-      <View className="mx-5 rounded-2xl overflow-hidden border border-[#E8E6DF]">
+      <View className="mx-5 rounded-2xl overflow-hidden border border-line">
         <Row
             icon="log-out"
             label={t("profile.signOut")}
@@ -360,6 +383,13 @@ export default function ProfileScreen() {
             onMadeDefault={handleMadeDefault}
             />
           )}
+
+          <ThemePicker
+          visible={themePickerOpen}
+          selected={themeMode}
+          onSelect={handleThemeSelect}
+          onClose={() => setThemePickerOpen(false)}
+          />
 
           <LanguagePicker
           visible={languagePickerOpen}

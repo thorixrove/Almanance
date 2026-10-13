@@ -49,7 +49,7 @@ export function CurrencyPicker({
 
     return(
         <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-            <SafeAreaView className="flex-1 bg-brand-body" edges={["top"]}>
+            <SafeAreaView className="flex-1 bg-page" edges={["top"]}>
                 <View className="flex-row items-center px-3 pt-3 pb-2 gap-3">
                     <TextInput
                     value={search}
@@ -57,7 +57,7 @@ export function CurrencyPicker({
                     placeholder={t("currencyPicker.search")}
                      placeholderTextColor="#8A8D96"
                     autoFocus
-                    className="flex-1 bg-white border border-[#E8E6DF] rounded-full px-4 py-2.5 text-sm text-brand-bg"
+                    className="flex-1 bg-card border border-line rounded-full px-4 py-2.5 text-sm text-ink"
                     />
                     <TouchableOpacity
                     onPress={() => {
@@ -78,12 +78,12 @@ export function CurrencyPicker({
                         onSelect(item)
                         setSearch("")
                     }}
-                    className="flex-row items-center px-5 py-3.5 border-b border-[#F0EDE6]"
+                    className="flex-row items-center px-5 py-3.5 border-b border-line-soft"
                     >
                         <Text className="text-brand-text-secondary w-8 text-sm">
                             {item.symbol}
                         </Text>
-                        <Text className="text-brand-bg text-sm font-medium w-12">
+                        <Text className="text-ink text-sm font-medium w-12">
                             {item.code}
                         </Text>
                         <Text
