@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Keyboard,
   Modal,
@@ -18,6 +19,7 @@ export function FormSheetModal({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const {t} = useTranslation()
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export function FormSheetModal({
           {children}
 
           <TouchableOpacity onPress={onClose} className="-mt-1 py-8 items-center">
-            <Text className="text-brand-text-secondary text-sm">Cancel</Text>
+            <Text className="text-brand-text-secondary text-sm">{t("common.cancel")}</Text>
           </TouchableOpacity>
         </View>
       </View>

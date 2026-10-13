@@ -1,11 +1,9 @@
 import { DateRangeSheet } from "@/components/DateRangeSheet"
 import { EditTransactionModal } from "@/components/EditTransactionModal"
 import { TransactionRow } from "@/components/TransactionRow"
-import { getCategoryLabel } from "@/constants/categories"
 import { useDeleteTransactions, useDeleteTransactionsBulk } from "@/hooks/mutation/useTransactionMutations"
 import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery"
 import { useTransactionsQuery } from "@/hooks/queries/useTransactionsQuery"
-import { formatDate } from "@/lib/i18n/dateLocale"
 import { Transaction, TransactionType } from "@/lib/services/transactions"
 import {
   ALL_TIME,
@@ -25,8 +23,11 @@ import {
   startOfMonth,
 } from "date-fns"
 import { useRouter } from "expo-router"
-import { useCallback, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { getCategoryLabel } from "@/constants/categories"
+import { formatDate } from "@/lib/i18n/dateLocale"
+import { useThemeColors } from "@/components/ThemeProvider"
+import { useCallback, useMemo, useState } from "react"
 import {
   ActivityIndicator,
   Alert,
@@ -103,9 +104,10 @@ function buildChartBuckets(range: DateRange) {
 export default function TransactionsScreen() {
   const router = useRouter()
   const { t, i18n } = useTranslation()
+  const colors = useThemeColors()
 
-  const [activeFilters, setActiveFilters] =
-    useState<(typeof FILTERS)[number]>("ALL")
+  const [activeFilters, setActiveFilters] = 
+  useState <(typeof FILTERS)[number]>("ALL")
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [exporting, setExporting] = useState(false)
@@ -125,11 +127,11 @@ export default function TransactionsScreen() {
 
 
   const typeFilter: TransactionType | null =
-    activeFilters === "Income"
-      ? "INCOME"
-      : activeFilters === "Expense"
-        ? "EXPENSE"
-        : null
+  activeFilters === "Income"
+  ? "INCOME"
+  : activeFilters === "Expense"
+  ? "EXPENSE"
+  : null
 
   const {
     data: transactions = [],
@@ -142,8 +144,8 @@ export default function TransactionsScreen() {
     accountId: activeAccountId,
     ...toFilterDates(dateRange),
   })
-  const { data: accounts = [], refetch: refetchAccounts } = useAccountsQuery()
-  const { mutateAsync: removeTransactions } = useDeleteTransactions()
+  const { data: accounts = [], refetch: refetchAccounts} = useAccountsQuery()
+  const { mutateAsync: removeTransactions} = useDeleteTransactions()
   const { mutateAsync: removeTransactionsBulk, isPending: bulkDeleting } = useDeleteTransactionsBulk()
 
   const loading = transactionsLoading
@@ -206,7 +208,7 @@ export default function TransactionsScreen() {
     if (exporting) return
     setExporting(true)
     try {
-      const { count } = await exportTransactionsToCsv(transactions, {
+      const {count} = await exportTransactionsToCsv(transactions, {
         applyWindow: !rangeActive,
       })
       if (count === 0) {
@@ -303,7 +305,7 @@ export default function TransactionsScreen() {
       (selected.length > 1
         ? t("transactions.deleteSelectedMany", { count: selected.length })
         : t("transactions.deleteSelectedOne", { count: selected.length })) +
-      (hasTransfer ? t("transactions.deleteSelectedTransferNote") : ""),
+        (hasTransfer ? t("transactions.deleteSelectedTransferNote") : ""),
       [
         { text: t("common.cancel"), style: "cancel" },
         {
@@ -341,10 +343,10 @@ export default function TransactionsScreen() {
   )
 
   return (
-    <SafeAreaView className="flex-1 bg-brand-body" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-page" edges={["top"]}>
       <View className="px-5 pt-3 pb-2">
         <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-brand-bg text-xl font-semibold">
+          <Text className="text-ink text-xl font-semibold">
             {selectionMode
               ? t("transactions.selectedCount", { count: selectedIds.size })
               : t("transactions.title")}
@@ -355,8 +357,9 @@ export default function TransactionsScreen() {
               <TouchableOpacity
                 onPress={handleDeleteSelected}
                 disabled={selectedIds.size === 0 || bulkDeleting}
-                className={`w-9 h-9 rounded-full items-center justify-center ${selectedIds.size === 0 ? "bg-white border border-[#E8E6DF]" : "bg-brand-coral"
-                  }`}
+                className={`w-9 h-9 rounded-full items-center justify-center ${
+                  selectedIds.size === 0 ? "bg-card border border-line" : "bg-brand-coral"
+                }`}
               >
                 {bulkDeleting ? (
                   <ActivityIndicator size="small" color="#fff" />
@@ -370,42 +373,42 @@ export default function TransactionsScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={exitSelectionMode}
-                className="w-9 h-9 rounded-full bg-white border border-[#E8E6DF] items-center justify-center"
+                className="w-9 h-9 rounded-full bg-card border border-line items-center justify-center"
               >
-                <Feather name="x" size={15} color="#5C5F68" />
+                <Feather name="x" size={15} color={colors.icon} />
               </TouchableOpacity>
             </View>
           ) : (
             <View className="flex-row items-center gap-2">
               <TouchableOpacity
                 onPress={() => setSelectionMode(true)}
-                className="w-9 h-9 rounded-full bg-white border border-[#E8E6DF] items-center justify-center"
+                className="w-9 h-9 rounded-full bg-card border border-line items-center justify-center"
               >
-                <Feather name="check-square" size={15} color="#5C5F68" />
+                <Feather name="check-square" size={15} color={colors.icon} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleExport}
                 disabled={exporting}
-                className="w-9 h-9 rounded-full bg-white border border-[#E8E6DF] items-center justify-center"
+                className="w-9 h-9 rounded-full bg-card border border-line items-center justify-center"
               >
                 {exporting ? (
-                  <ActivityIndicator size="small" color="#5C5F68" />
+                  <ActivityIndicator size="small" color={colors.icon} />
                 ) : (
-                  <Feather name="download" size={15} color="#5C5F68" />
+                  <Feather name="download" size={15} color={colors.icon} />
                 )}
               </TouchableOpacity>
             </View>
           )}
         </View>
 
-        <View className="flex-row items-center gap-2 bg-white rounded-xl border border-[#E8E6DF] px-3.5 py-2.5 mb-2.5">
+        <View className="flex-row items-center gap-2 bg-card rounded-xl border border-line px-3.5 py-2.5 mb-2.5">
           <Feather name="search" size={15} color="#8A8D96" />
           <TextInput
             value={search}
             onChangeText={setSearch}
             placeholder={t("transactions.searchPlaceholder")}
             placeholderTextColor="#8A8D96"
-            className="flex-1 text-xs text-brand-bg"
+            className="flex-1 text-xs text-ink"
           />
           {search.length > 0 && (
             <TouchableOpacity onPress={() => setSearch("")}>
@@ -419,16 +422,18 @@ export default function TransactionsScreen() {
             <TouchableOpacity
               key={filter}
               onPress={() => setActiveFilters(filter)}
-              className={`px-3.5 py-1.5 rounded-full border ${activeFilters === filter
-                  ? "bg-brand-bg border-brand-bg"
-                  : "bg-white border-[#E8E6DF]"
-                }`}
+              className={`px-3.5 py-1.5 rounded-full border ${
+                activeFilters === filter
+                  ? "bg-solid border-solid"
+                  : "bg-card border-line"
+              }`}
             >
               <Text
-                className={`text-xs ${activeFilters === filter
-                    ? "text-white"
+                className={`text-xs ${
+                  activeFilters === filter
+                    ? "text-on-solid"
                     : "text-brand-text-secondary"
-                  }`}
+                }`}
               >
                 {t(FILTER_LABEL_KEYS[filter])}
               </Text>
@@ -440,34 +445,38 @@ export default function TransactionsScreen() {
           <View className="flex-row gap-2">
             <TouchableOpacity
               onPress={() => setActiveAccountId(null)}
-              className={`px-3.5 py-1.5 rounded-full border ${activeAccountId === null
-                  ? "bg-brand-bg border-brand-bg"
-                  : "bg-white border-[#E8E6DF]"
-                }`}
+              className={`px-3.5 py-1.5 rounded-full border ${
+                activeAccountId === null
+                  ? "bg-solid border-solid"
+                  : "bg-card border-line"
+              }`}
             >
               <Text
-                className={`text-xs ${activeAccountId === null
-                    ? "text-white"
+                className={`text-xs ${
+                  activeAccountId === null
+                    ? "text-on-solid"
                     : "text-brand-text-secondary"
-                  }`}
+                }`}
               >
                 {t("transactions.allAccounts")}
               </Text>
             </TouchableOpacity>
             {accounts.map((accounts) => (
-              <TouchableOpacity
+             <TouchableOpacity
                 key={accounts.id}
                 onPress={() => setActiveAccountId(accounts.id)}
-                className={`px-3.5 py-1.5 rounded-full border ${activeAccountId === accounts.id
-                    ? "bg-brand-bg border-brand-bg"
-                    : "bg-white border-[#E8E6DF]"
-                  }`}
+                className={`px-3.5 py-1.5 rounded-full border ${
+                  activeAccountId === accounts.id
+                    ? "bg-solid border-solid"
+                    : "bg-card border-line"
+                }`}
               >
                 <Text
-                  className={`text-xs ${activeAccountId === accounts.id
-                      ? "text-white"
+                  className={`text-xs ${
+                    activeAccountId === accounts.id
+                      ? "text-on-solid"
                       : "text-brand-text-secondary"
-                    }`}
+                  }`}
                 >
                   {accounts.name}
                 </Text>
@@ -479,17 +488,19 @@ export default function TransactionsScreen() {
         <View className="flex-row items-center gap-2 mt-2.5">
           <TouchableOpacity
             onPress={() => setRangeSheetOpen(true)}
-            className={`flex-row items-center gap-1.5 px-3.5 py-1.5 rounded-full border ${rangeActive ? "bg-brand-bg border-brand-bg" : "bg-white border-[#E8E6DF]"
-              }`}
+            className={`flex-row items-center gap-1.5 px-3.5 py-1.5 rounded-full border ${
+              rangeActive ? "bg-solid border-solid" : "bg-card border-line"
+            }`}
           >
             <Feather
               name="calendar"
               size={12}
-              color={rangeActive ? "#fff" : "#5C5F68"}
+              color={rangeActive ? colors.onSolid : colors.icon}
             />
             <Text
-              className={`text-xs ${rangeActive ? "text-white" : "text-brand-text-secondary"
-                }`}
+              className={`text-xs ${
+                rangeActive ? "text-on-solid" : "text-brand-text-secondary"
+              }`}
             >
               {formatRangeLabel(dateRange)}
             </Text>
@@ -497,7 +508,7 @@ export default function TransactionsScreen() {
           {rangeActive && (
             <TouchableOpacity
               onPress={() => handleApplyRange(ALL_TIME)}
-              className="w-7 h-7 rounded-full bg-white border border-[#E8E6DF] items-center justify-center"
+              className="w-7 h-7 rounded-full bg-card border border-line items-center justify-center"
             >
               <Feather name="x" size={13} color="#8A8D96" />
             </TouchableOpacity>
@@ -512,16 +523,16 @@ export default function TransactionsScreen() {
       ) : error ? (
         <View className="flex-1 items-center justify-center px-10">
           <Feather name="alert-circle" size={32} color="#FF6B4A" />
-          <Text className="text-brand-text-muted text-sm mt-3 text-center">
+          <Text className="text-subtle text-sm mt-3 text-center">
             {t("transactions.loadError")}
-          </Text>
+            </Text>
           <TouchableOpacity
             onPress={() => loadData()}
-            className="mt-4 bg-brand-bg rounded-full px-4 py-2"
+            className="mt-4 bg-solid rounded-full px-4 py-2"
           >
-            <Text className="text-white text-xs font-medium">{t("transactions.retry")}</Text>
-          </TouchableOpacity>
-        </View>
+            <Text className="text-on-solid text-xs font-medium">{t("transactions.retry")}</Text>
+            </TouchableOpacity>
+          </View>
       ) : (
         <FlatList
           data={filterTransactions}
@@ -545,59 +556,58 @@ export default function TransactionsScreen() {
           removeClippedSubviews
           ListHeaderComponent={
             transactions.length > 0 && !selectionMode ? (
-              <View className="bg-white rounded-2xl border border-[#E8E6DF] p-4 mb-4">
+              <View className="bg-card rounded-2xl border border-line p-4 mb-4">
                 <View className="flex-row justify-between items-center mb-3">
-
                   <View className="flex-row gap-3">
                     <View className="flex-row items-center gap-1">
                       <View className="w-2 h-2 rounded-full bg-brand-success" />
                       <Text className="text-[10px] text-brand-text-secondary">
                         {t("transactions.income")}
-                      </Text>
-                    </View>
+                        </Text>
+                      </View>
 
                     <View className="flex-row items-center gap-1">
                       <View className="w-2 h-2 rounded-full bg-brand-coral" />
                       <Text className="text-[10px] text-brand-text-secondary">
                         {t("transactions.expense")}
-                      </Text>
+                          </Text>
+                          </View>
+                        </View>
                     </View>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <BarChart
+                          data={dailyIncomeExpense}
+                          width={Math.max(dailyIncomeExpense.length * 9, 280)}
+                          height={120}
+                          barWidth={6}
+                          spacing={4}
+                          hideYAxisText
+                          xAxisColor={colors.line}
+                          yAxisColor="transparent"
+                          rulesColor={colors.lineSoft}
+                          noOfSections={3}
+                          xAxisLabelTextStyle={{ color: "#8A8D96", fontSize: 7 }}
+                          isThreeD={false}
+                          roundedTop
+                        />
+                    </ScrollView>
                   </View>
-                </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <BarChart
-                    data={dailyIncomeExpense}
-                    width={Math.max(dailyIncomeExpense.length * 9, 280)}
-                    height={120}
-                    barWidth={6}
-                    spacing={4}
-                    hideYAxisText
-                    xAxisColor="#E8E6DF"
-                    yAxisColor="transparent"
-                    rulesColor="#F0EEE7"
-                    noOfSections={3}
-                    xAxisLabelTextStyle={{ color: "#8A8D96", fontSize: 7 }}
-                    isThreeD={false}
-                    roundedTop
-                  />
-                </ScrollView>
-              </View>
             ) : null
           }
           ListEmptyComponent={
             <View className="items-center justify-center py-20">
-              <Feather name="inbox" size={32} color="#BDC3C7" />
-              <Text className="text-brand-text-muted text-sm mt-3">
+              <Feather name="inbox" size={32} color={colors.subtle} />
+              <Text className="text-subtle text-sm mt-3">
                 {search
                   ? t("transactions.emptySearch")
                   : rangeActive
-                    ? t("transactions.emptyRange")
-                    : t("transactions.empty")}
+                  ? t("transactions.emptyRange")
+                  : t("transactions.empty")}
               </Text>
             </View>
           }
-        />
-      )}
+          />
+        )}
 
 
       <DateRangeSheet
@@ -614,7 +624,7 @@ export default function TransactionsScreen() {
         onSaved={() => setEditingTx(null)}
       />
 
-      {/* Add trancation FAB - nvaigate to the Add tab */}
+        {/* Add trancation FAB - nvaigate to the Add tab */}
       {/* <TouchableOpacity
         onPress={() => router.push("/(root)/(tabs)/add-transaction")}
         className="absolute right-5 w-14 h-14 rounded-full bg-brand-bg items-center justify-center shadow-lg"

@@ -1,4 +1,5 @@
 import "@/lib/i18n";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { queryClient } from "@/lib/query/client";
 import { useUserStore } from "@/store/useStore";
 import { ClerkProvider } from "@clerk/expo";
@@ -17,19 +18,22 @@ if (!publishableKey) {
 
 export default function RootLayout() {
   const hydrateLanguage = useUserStore((state) => state.hydrateLanguage)
-  const [languageReady, setLanguageReady] = useState(false)
+  const hydrateTheme  = useUserStore((state) => state.hydrateTheme)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    hydrateLanguage().finally(() => setLanguageReady(true))
-  }, [hydrateLanguage])
+    Promise.all([hydrateLanguage(), hydrateTheme()]).finally(() => setReady(true))
+  }, [hydrateLanguage, hydrateTheme])
 
-  if (!languageReady) return null
+  if (!ready) return null
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+          <ThemeProvider>
           <Slot />
+          </ThemeProvider>
         </ClerkProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

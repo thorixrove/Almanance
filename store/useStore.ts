@@ -1,12 +1,17 @@
 import {create} from "zustand"
 import { getBiometricEnabled, setBiometricEnabled } from "@/lib/biometric"
 import i18n, { getSavedLanguage, saveLanguage, type Language } from "@/lib/i18n"
+import { applyThemeMode, getSavedThemeMode, saveThemeMode, type ThemeMode } from "@/lib/theme"
 
 interface UserStore {
     currency: string;
     setCurrency: (value: string) => void;
     needsOnboarding: boolean | null; // null = not yet determined
     setNeedsOnboarding: (value: boolean | null) => void;
+
+    themeMode: ThemeMode
+    hydrateTheme: () => Promise<void>
+    setThemeMode: (mode: ThemeMode) => Promise<void>
 
     language: Language
     hydrateLanguage: () => Promise<void>
@@ -25,6 +30,20 @@ export const useUserStore = create<UserStore>((set, get) => ({
     setCurrency: (value) => set({ currency: value }),
     needsOnboarding: null,
     setNeedsOnboarding: (value) => set({ needsOnboarding: value }),
+
+    themeMode: "system",
+
+    hydrateTheme: async () => {
+        const saved = await getSavedThemeMode()
+        applyThemeMode(saved)
+        set({themeMode: saved})
+    },
+
+    setThemeMode: async (mode) => {
+        applyThemeMode(mode)
+        set({ themeMode: mode})
+        await saveThemeMode(mode)
+    },
 
     language: (i18n.language as Language) ?? "en",
 

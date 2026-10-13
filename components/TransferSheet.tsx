@@ -6,6 +6,7 @@ import { useUserStore } from "@/store/useStore"
 import { Feather } from "@expo/vector-icons"
 import { formatDate } from "@/lib/i18n/dateLocale"
 import { useTranslation } from "react-i18next"
+import { useThemeColors } from "@/components/ThemeProvider"
 import { useEffect, useState } from "react"
 import { Text, TextInput, TouchableOpacity, View } from "react-native"
 import { BottomSheet } from "./BottomSheet"
@@ -22,6 +23,7 @@ export function TransferSheet({
   onSaved: () => void
 }) {
   const { t } = useTranslation()
+  const colors = useThemeColors()
   const currency = useUserStore((s) => s.currency)
   const { data: accounts = [] } = useAccountsQuery()
   const { mutateAsync: createTransfer, isPending: saving } = useCreateTransfer()
@@ -112,10 +114,10 @@ export function TransferSheet({
       <TouchableOpacity
         onPress={handleSave}
         disabled={saving}
-        className="bg-brand-bg rounded-xl py-4 items-center"
+        className="bg-solid rounded-xl py-4 items-center"
         activeOpacity={0.85}
       >
-        <Text className="text-white text-sm font-semibold">
+        <Text className="text-on-solid text-sm font-semibold">
           {saving ? t("transfer.transferring") : t("transfer.action")}
         </Text>
       </TouchableOpacity>
@@ -136,7 +138,7 @@ export function TransferSheet({
       ) : (
         <>
           {/* From */}
-          <Text className="text-brand-bg text-xs font-medium mb-1.5">{t("transfer.from")}</Text>
+          <Text className="text-ink text-xs font-medium mb-1.5">{t("transfer.from")}</Text>
           <View className="mb-1.5">
             <PillGroup
               options={accounts.map((a) => ({ key: a.id, label: a.name }))}
@@ -151,7 +153,7 @@ export function TransferSheet({
           )}
 
           {/* To */}
-          <Text className="text-brand-bg text-xs font-medium mb-1.5">{t("transfer.to")}</Text>
+          <Text className="text-ink text-xs font-medium mb-1.5">{t("transfer.to")}</Text>
           <View className="mb-1.5">
             <PillGroup
               options={accounts
@@ -171,7 +173,7 @@ export function TransferSheet({
           )}
 
           {/* Amount */}
-          <Text className="text-brand-bg text-xs font-medium mb-1.5">{t("addTransaction.amount")}</Text>
+          <Text className="text-ink text-xs font-medium mb-1.5">{t("addTransaction.amount")}</Text>
           <TextInput
             value={amount}
             onChangeText={(v) => {
@@ -181,23 +183,23 @@ export function TransferSheet({
             placeholder="0"
             placeholderTextColor={COLORS.placeholder}
             keyboardType="numeric"
-            className="bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-4 text-sm text-brand-bg"
+            className="bg-card border border-line rounded-xl px-4 py-3.5 mb-4 text-sm text-ink"
           />
 
           {/* Date */}
-          <Text className="text-brand-bg text-xs font-medium mb-1.5">{t("addTransaction.date")}</Text>
+          <Text className="text-ink text-xs font-medium mb-1.5">{t("addTransaction.date")}</Text>
           <TouchableOpacity
             onPress={() => setDatePickerOpen((v) => !v)}
-            className="flex-row items-center justify-between bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-4"
+            className="flex-row items-center justify-between bg-card border border-line rounded-xl px-4 py-3.5 mb-4"
           >
-            <Text className="text-sm text-brand-bg">
+            <Text className="text-sm text-ink">
               {formatDate(date, "d MMM yyyy")}
             </Text>
-            <Feather name="calendar" size={16} color="#5C5F68" />
+            <Feather name="calendar" size={16} color={colors.icon} />
           </TouchableOpacity>
 
           {datePickerOpen && (
-            <View className="bg-white border border-[#E8E6DF] rounded-xl mb-4 overflow-hidden">
+            <View className="bg-card border border-line rounded-xl mb-4 overflow-hidden">
               <CalendarPicker
                 value={date}
                 maximumDate={new Date()}
@@ -210,7 +212,7 @@ export function TransferSheet({
           )}
 
           {/* Note */}
-          <Text className="text-brand-bg text-xs font-medium mb-1.5">
+          <Text className="text-ink text-xs font-medium mb-1.5">
             {t("transfer.note")}
           </Text>
           <TextInput
@@ -218,7 +220,7 @@ export function TransferSheet({
             onChangeText={setNote}
             placeholder={t("transfer.notePlaceholder")}
             placeholderTextColor={COLORS.placeholder}
-            className="bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-4 text-sm text-brand-bg"
+            className="bg-card border border-line rounded-xl px-4 py-3.5 mb-4 text-sm text-ink"
           />
         </>
       )}

@@ -4,6 +4,7 @@ import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
 import {CameraView, useCameraPermissions} from "expo-camera"
 import * as ImagePicker from "expo-image-picker"
 import { useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Modal, Text, TouchableOpacity, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
@@ -17,6 +18,7 @@ export function ReceiptScannerModal({
     onClose: () => void
     onCaptured: (base64: string, mimeType: string) => void
 }) {
+    const { t } = useTranslation()
     const cameraRef = useRef<CameraView>(null)
     const [permission, requestPermission] = useCameraPermissions()
     const [capturing, setCapturing] = useState(false)
@@ -87,7 +89,7 @@ export function ReceiptScannerModal({
                 color={COLORS.teal}
               />
               <Text className="text-white text-[11px] font-medium">
-                Align the receipt
+                {t("scanner.align")}
               </Text>
             </View>
             <View className="w-10 h-10" />
@@ -123,10 +125,10 @@ export function ReceiptScannerModal({
           <View className="absolute inset-0 items-center justify-center bg-black/80 px-10">
             <Feather name="camera-off" size={32} color="#8A8D96" />
             <Text className="text-white/70 text-sm mt-3 text-center">
-              Camera access is off. Enable it in Settings to scan receipts.
+              {t("scanner.cameraOff")}
             </Text>
             <TouchableOpacity onPress={onClose} className="mt-6">
-              <Text className="text-white text-sm font-medium">Close</Text>
+              <Text className="text-white text-sm font-medium">{t("common.close")}</Text>
             </TouchableOpacity>
           </View>
         )}

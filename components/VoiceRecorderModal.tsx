@@ -12,6 +12,7 @@ import {
 import {BlurView} from "expo-blur"
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Modal, Text, TouchableOpacity, View } from "react-native";
 import Animated, {
   Easing,
@@ -99,6 +100,7 @@ export function VoiceRecorderModal({
     onClose: () => void
     onExtracted: (result: ExtractedTransaction) => void;
 }) {
+    const { t } = useTranslation()
     const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY)
     // Renamed from "Status" (capital S) to "status" (lowercase) to match
     // every other usage in this file, and to avoid colliding with the
@@ -222,14 +224,13 @@ export function VoiceRecorderModal({
             <>
               <Feather name="alert-circle" size={32} color="#FF6B4A" />
               <Text className="text-white/60 text-sm mt-3 mb-6 text-center">
-                Couldn&apos;t process that. Check your microphone permission and
-                try again.
+                {t("voice.error")}
               </Text>
               <TouchableOpacity
                 onPress={onClose}
                 className="bg-white/10 rounded-xl px-6 py-3.5"
               >
-                <Text className="text-white text-sm font-semibold">Close</Text>
+                <Text className="text-white text-sm font-semibold">{t("common.close")}</Text>
               </TouchableOpacity>
             </>
           ) : (
@@ -244,22 +245,22 @@ export function VoiceRecorderModal({
                   style={{ color: COLORS.teal }}
                   className="text-[11px] font-semibold tracking-wide uppercase"
                 >
-                  AI voice log
+                  {t("voice.badge")}
                 </Text>
               </View>
               <Text className="text-white text-base font-semibold mb-1">
                 {status === "recording"
-                  ? "Listening…"
+                  ? t("voice.listening")
                   : status === "processing"
-                  ? "Understanding that…"
-                  : "Tell me about a transaction"}
+                  ? t("voice.understanding")
+                  : t("voice.prompt")}
               </Text>
               <Text className="text-white/50 text-xs mb-8 text-center px-4">
                 {status === "recording"
                   ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
                   : status === "processing"
-                  ? "Transcribing and extracting the details"
-                  : '"I spent 400 on groceries yesterday"'}
+                  ? t("voice.transcribing")
+                  : t("voice.example")}
               </Text>
 
               <View className="w-24 h-24 items-center justify-center mb-8">
@@ -294,7 +295,7 @@ export function VoiceRecorderModal({
               </View>
 
               <TouchableOpacity onPress={onClose} disabled={status === "processing"}>
-                <Text className="text-white/40 text-sm">Cancel</Text>
+                <Text className="text-white/40 text-sm">{t("common.cancel")}</Text>
               </TouchableOpacity>
             </>
           )}

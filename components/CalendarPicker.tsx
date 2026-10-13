@@ -1,5 +1,5 @@
 import DateTimePicker, {useDefaultStyles} from "react-native-ui-datepicker"
-
+import { useThemeColors, useThemeScheme } from "@/components/ThemeProvider"
 
 export function CalendarPicker({
     value,
@@ -10,7 +10,9 @@ export function CalendarPicker({
     onChange: (date: Date) => void
     maximumDate?: Date
 }) {
-    const defaultStyles = useDefaultStyles("light")
+    const scheme = useThemeScheme()
+    const colors = useThemeColors()
+    const defaultStyles = useDefaultStyles(scheme)
 
     return (
         <DateTimePicker
@@ -22,7 +24,7 @@ export function CalendarPicker({
     
         styles={{
             ...defaultStyles,
-            today: { borderWidth: 1, borderColor: "#1A1D26" },
+            today: { borderWidth: 1, borderColor: colors.ink },
         }}
         />
     )

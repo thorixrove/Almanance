@@ -2,11 +2,13 @@ import { NativeTabs, Label, Icon } from 'expo-router/unstable-native-tabs';
 import {Feather} from "@expo/vector-icons"
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useThemeColors } from '@/components/ThemeProvider';
 
 const useNativeTabs = false
 
 export default function TabLayout() {
     const { t } = useTranslation()
+    const colors = useThemeColors()
     if (useNativeTabs) {
   return (
     <NativeTabs
@@ -51,10 +53,10 @@ return (
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: "#4A9EFF",
-        tabBarInactiveTintColor: "#5C5F68",
+        tabBarInactiveTintColor: colors.icon,
         tabBarStyle: {
-          backgroundColor: "#FFFFFF",
-          borderTopColor: "#E8E6DF",
+          backgroundColor: colors.card,
+          borderTopColor: colors.line,
           paddingTop: 4,
           height: 100,
         },
