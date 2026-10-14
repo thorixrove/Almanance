@@ -104,7 +104,7 @@ export default function OnBoardingScreen() {
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-brand-body' edges={["top"]}>
+    <SafeAreaView className='flex-1 bg-page' edges={["top"]}>
         <KeyboardAvoidingView
         behavior={Platform.OS === "android" ? "padding" : "height"}
         className='flex-1'
@@ -115,18 +115,18 @@ export default function OnBoardingScreen() {
             className='w-32 h-14 mb-10'
             resizeMode="contain"
             />
-            <Text className="text-[#1A1D26] text-3xl font-bold mb-2">
+            <Text className="text-ink text-3xl font-bold mb-2">
               {t("onboarding.title")}
             </Text>
-            <Text className='text-brand-text-muted text-sm mb-10'>
+            <Text className='text-subtle text-sm mb-10'>
              {t("onboarding.subtitle")}
             </Text>
 
             {/* Starting balance */}
-            <Text className='text-brand-bg text-xs font-medium mb-1.5'>
+            <Text className='text-ink text-xs font-medium mb-1.5'>
               {t("onboarding.startingBalance")}
             </Text>
-            <View className="flex-row items-center bg-white border border-[#E8E6DF] rounded-xl px-4 mb-1">
+            <View className="flex-row items-center bg-card border border-line rounded-xl px-4 mb-1">
                 <Text className="text-brand-text-secondary text-sm mr-2">
                   {selectedCurrency.symbol}
               </Text>
@@ -144,7 +144,7 @@ export default function OnBoardingScreen() {
                   placeholderTextColor="#8A8D96"
                   keyboardType="numeric"
                   returnKeyType="done"
-                  className="flex-1 py-3.5 text-sm text-brand-bg"
+                  className="flex-1 py-3.5 text-sm text-ink"
                 />
               )}
               />
@@ -157,14 +157,14 @@ export default function OnBoardingScreen() {
             <View className='mb-4'/>
 
             {/* Currency picker */}
-            <Text className='text-brand-bg text-xs font-medium mb-1.5'>
+            <Text className='text-ink text-xs font-medium mb-1.5'>
               {t("onboarding.currency")}
             </Text>
             <TouchableOpacity
             onPress={() => setPickerOpen(true)}
-            className="flex-row items-center justify-between bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-6"
+            className="flex-row items-center justify-between bg-card border border-line rounded-xl px-4 py-3.5 mb-6"
             >
-              <Text className='text-sm text-brand-bg'>
+              <Text className='text-sm text-ink'>
               {selectedCurrency.symbol} {selectedCurrency.code} —{" "}
               {selectedCurrency.name}
               </Text>
@@ -178,10 +178,10 @@ export default function OnBoardingScreen() {
             <TouchableOpacity
             onPress={handleSubmit(handleSave)}
             disabled={saving}
-            className='bg-brand-bg rounded-xl py-4 items-center'
+            className='bg-solid rounded-xl py-4 items-center'
             activeOpacity={0.85}
             >
-              <Text className='text-white text-sm font-semibold'>
+              <Text className='text-on-solid text-sm font-semibold'>
                 {saving ? t("onboarding.saving") : t("onboarding.getStarted")}
               </Text>
             </TouchableOpacity>

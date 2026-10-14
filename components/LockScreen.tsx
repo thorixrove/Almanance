@@ -20,7 +20,7 @@ export function LockScreen() {
         setBusy(true)
         setFailed(false)
         try {
-            const ok = await authenticate("Buka Almanance")
+            const ok = await authenticate(t("lock.unlockPrompt"))
             if (ok) {
                 unlock()
             } else {
@@ -32,7 +32,7 @@ export function LockScreen() {
             busyRef.current = false
             setBusy(false)
         }
-    }, [unlock])
+    }, [unlock, t])
 
     useEffect(() => {
         handleUnlock()

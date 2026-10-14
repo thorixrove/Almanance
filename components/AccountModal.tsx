@@ -78,7 +78,6 @@ export function AccountModal({
           ? t("account.deleteMessageOne", { count: result.transactionCount })
           : t("account.deleteMessageMany", { count: result.transactionCount }),
         [
-          { text: t("common.cancel"), style: "cancel" },
           {
             text: t("transactions.delete"),
             style: "destructive",

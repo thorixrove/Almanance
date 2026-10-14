@@ -6,6 +6,7 @@ import { useUser } from "@clerk/expo"
 import { Feather } from "@expo/vector-icons"
 import { useState, useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
+import { useThemeColors } from "@/components/ThemeProvider"
 import {
   ActivityIndicator,
   FlatList,
@@ -70,10 +71,10 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   return (
     <View className={`mb-3 max-w-[85%] ${isUser ? "self-end" : "self-start"}`}>
       <View
-        className={`rounded-2xl px-3.5 py-2.5 ${isUser ? "bg-brand-bg" : "bg-white border border-[#E8E6DF]"
+        className={`rounded-2xl px-3.5 py-2.5 ${isUser ? "bg-solid" : "bg-card border border-line"
           }`}
       >
-        <Text className={`text-sm ${isUser ? "text-white" : "text-brand-bg"}`}>
+        <Text className={`text-sm ${isUser ? "text-on-solid" : "text-ink"}`}>
           {message.content}
         </Text>
       </View>
@@ -84,6 +85,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 export default function AssistantScreen() {
   const { user } = useUser()
   const { t } = useTranslation()
+  const colors = useThemeColors()
   const supabase = useSupabase()
   const currency = useUserStore((s) => s.currency)
   const { refetch: refetchTransactions } = useTransactionsQuery()
@@ -185,9 +187,9 @@ export default function AssistantScreen() {
   const inputBottomPadding = keyboardHeight > 0 ? adjustedKeyboardHeight + KEYBOARD_GAP_BUFFER : TAB_BAR_CLEARANCE
 
   return (
-    <SafeAreaView className="flex-1 bg-brand-body" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-page" edges={["top"]}>
       <View className="px-5 pt-3 pb-2 flex-row items-center justify-between">
-        <Text className="text-brand-bg text-xl font-semibold">{t("tabs.assistant")}</Text>
+        <Text className="text-ink text-xl font-semibold">{t("tabs.assistant")}</Text>
         <View className="flex-row items-center gap-5">
           <TouchableOpacity
             onPress={handleNewChat}
@@ -195,7 +197,7 @@ export default function AssistantScreen() {
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             style={{ opacity: sending ? 0.3 : 1 }}
           >
-            <Feather name="edit" size={20} color="#1A1D26" />
+            <Feather name="edit" size={20} color={colors.ink} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setHistoryVisible(true)}
@@ -203,7 +205,7 @@ export default function AssistantScreen() {
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             style={{ opacity: sending ? 0.3 : 1 }}
           >
-            <Feather name="clock" size={20} color="#1A1D26" />
+            <Feather name="clock" size={20} color={colors.ink} />
           </TouchableOpacity>
         </View>
       </View>
@@ -244,7 +246,7 @@ export default function AssistantScreen() {
               <TouchableOpacity
                 key={promptKey}
                 onPress={() => sendMessage(t(promptKey))}
-                className="bg-white rounded-xl border border-[#E8E6DF] px-3.5 py-2.5 self-start"
+                className="bg-card rounded-xl border border-line px-3.5 py-2.5 self-start"
               >
                 <Text className="text-brand-text-secondary text-xs">
                   {t(promptKey)}
@@ -265,17 +267,17 @@ export default function AssistantScreen() {
             placeholder={t("assistant.placeholder")}
             placeholderTextColor="#8A8D96"
             editable={!sending}
-            className="flex-1 bg-white border border-[#E8E6DF] rounded-full px-4 py-3 text-sm text-brand-bg"
+            className="flex-1 bg-card border border-line rounded-full px-4 py-3 text-sm text-ink"
             onSubmitEditing={() => sendMessage(input)}
             returnKeyLabel="send"
           />
           <TouchableOpacity
             onPress={() => sendMessage(input)}
             disabled={sending}
-            className="w-11 h-11 rounded-full bg-brand-bg items-center justify-center"
+            className="w-11 h-11 rounded-full bg-solid items-center justify-center"
             style={{ opacity: sending ? 0.6 : 1 }}
           >
-            <Feather name="arrow-up" size={18} color="#fff" />
+            <Feather name="arrow-up" size={18} color={colors.onSolid} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
