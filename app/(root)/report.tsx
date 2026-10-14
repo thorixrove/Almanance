@@ -15,6 +15,7 @@ import {
 } from "date-fns"
 import { useRouter } from "expo-router"
 import { useTranslation } from "react-i18next"
+import { useThemeColors } from "@/components/ThemeProvider"
 import { useCallback, useMemo, useRef, useState } from "react"
 import {
   ActivityIndicator,
@@ -87,18 +88,18 @@ function CategoryRow({
     item.current > 0 ? `${Math.max((item.current / maxValue) * 100, 2)}%` : "0%"
 
   return (
-    <View className={`py-3 ${isLast ? "" : "border-b border-[#F0EEE7]"}`}>
+    <View className={`py-3 ${isLast ? "" : "border-b border-line-soft"}`}>
       <View className="flex-row items-center justify-between mb-2">
         <View className="flex-row items-center gap-2 flex-1">
           <Text className="text-base">{config.icon}</Text>
-          <Text className="text-brand-bg text-[13px] font-medium" numberOfLines={1}>
+          <Text className="text-ink text-[13px] font-medium" numberOfLines={1}>
             {getCategoryLabel(item.category)}
           </Text>
         </View>
         <DeltaBadge delta={item} />
       </View>
 
-      <View className="h-1.5 rounded-full bg-[#F0EEE7] overflow-hidden mb-2">
+      <View className="h-1.5 rounded-full bg-line-soft overflow-hidden mb-2">
         <View
           className="h-1.5 rounded-full bg-brand-blue"
           style={{ width: barWidth as any }}
@@ -106,7 +107,7 @@ function CategoryRow({
       </View>
 
       <View className="flex-row justify-between">
-        <Text className="text-brand-bg text-xs font-medium">
+        <Text className="text-ink text-xs font-medium">
           {formatPrice(item.current, currency)}
         </Text>
         <Text className="text-brand-text-secondary text-xs">
@@ -130,6 +131,7 @@ function MonthPage({
   currency: string
 }) {
   const { t } = useTranslation()
+  const colors = useThemeColors()
   const { report, isLoading, isError, isRefetching, refetch } =
     useMonthlyReportQuery(month)
 
@@ -147,7 +149,7 @@ function MonthPage({
     >
       {isLoading ? (
         <View className="py-16 items-center">
-          <ActivityIndicator color="#1A1D26" />
+          <ActivityIndicator color={colors.ink} />
         </View>
       ) : isError ? (
         <View className="py-16 items-center">
@@ -156,15 +158,15 @@ function MonthPage({
           </Text>
           <TouchableOpacity
             onPress={() => refetch()}
-            className="bg-brand-bg rounded-xl px-5 py-3"
+            className="bg-solid rounded-xl px-5 py-3"
           >
-            <Text className="text-white text-sm font-semibold">{t("report.tryAgain")}</Text>
+            <Text className="text-on-solid text-sm font-semibold">{t("report.tryAgain")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <>
           {/* Total */}
-          <View className="bg-brand-bg rounded-[20px] p-5 mt-2 mb-4">
+          <View className="bg-hero rounded-[20px] p-5 mt-2 mb-4">
             <Text className="text-brand-text-secondary text-xs mb-1.5">
               {t("report.totalSpending")}
             </Text>
@@ -188,8 +190,8 @@ function MonthPage({
           </View>
 
           {/* Per kategori */}
-          <View className="bg-white rounded-[18px] border border-[#E8E6DF] px-4 pt-4 pb-1">
-            <Text className="text-brand-bg text-sm font-medium">
+          <View className="bg-card rounded-[18px] border border-line px-4 pt-4 pb-1">
+            <Text className="text-ink text-sm font-medium">
               {t("report.byCategory")}
             </Text>
 
@@ -232,6 +234,7 @@ function MonthPickerModal({
   onClose: () => void
 }) {
   useTranslation()
+  const colors = useThemeColors()
   const [year, setYear] = useState(selected.getFullYear())
   const minYear = minMonth.getFullYear()
   const maxYear = maxMonth.getFullYear()
@@ -250,26 +253,26 @@ function MonthPickerModal({
         onPress={onClose}
       >
         {/* Pressable kosong agar tap di dalam kartu tidak menutup modal */}
-        <Pressable className="bg-white rounded-[20px] p-5" onPress={() => {}}>
+        <Pressable className="bg-card rounded-[20px] p-5" onPress={() => {}}>
           <View className="flex-row items-center justify-between mb-4">
             <TouchableOpacity
               onPress={() => setYear((y) => y - 1)}
               disabled={year <= minYear}
               hitSlop={8}
-              className="w-9 h-9 rounded-full border border-[#E8E6DF] items-center justify-center"
+              className="w-9 h-9 rounded-full border border-line items-center justify-center"
               style={{ opacity: year <= minYear ? 0.35 : 1 }}
             >
-              <Feather name="chevron-left" size={18} color="#1A1D26" />
+              <Feather name="chevron-left" size={18} color={colors.ink} />
             </TouchableOpacity>
-            <Text className="text-brand-bg text-base font-medium">{year}</Text>
+            <Text className="text-ink text-base font-medium">{year}</Text>
             <TouchableOpacity
               onPress={() => setYear((y) => y + 1)}
               disabled={year >= maxYear}
               hitSlop={8}
-              className="w-9 h-9 rounded-full border border-[#E8E6DF] items-center justify-center"
+              className="w-9 h-9 rounded-full border border-line items-center justify-center"
               style={{ opacity: year >= maxYear ? 0.35 : 1 }}
             >
-              <Feather name="chevron-right" size={18} color="#1A1D26" />
+              <Feather name="chevron-right" size={18} color={colors.ink} />
             </TouchableOpacity>
           </View>
 
@@ -285,14 +288,14 @@ function MonthPickerModal({
                     onPress={() => onSelect(date)}
                     className={`py-3 rounded-xl items-center border ${
                       active
-                        ? "bg-brand-bg border-brand-bg"
-                        : "bg-white border-[#E8E6DF]"
+                        ? "bg-solid border-solid"
+                        : "bg-card border-line"
                     }`}
                     style={{ opacity: disabled ? 0.3 : 1 }}
                   >
                     <Text
                       className={`text-sm font-medium ${
-                        active ? "text-white" : "text-brand-bg"
+                        active ? "text-on-solid" : "text-ink"
                       }`}
                     >
                       {formatDate(date, "MMM")}
@@ -311,6 +314,7 @@ function MonthPickerModal({
 export default function ReportScreen() {
   const router = useRouter()
   const { t } = useTranslation()
+  const colors = useThemeColors()
   const currency = useUserStore((s) => s.currency)
   const { width } = useWindowDimensions()
 
@@ -353,24 +357,24 @@ export default function ReportScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-brand-body" edges={["top", "bottom"]}>
+    <SafeAreaView className="flex-1 bg-page" edges={["top", "bottom"]}>
       {/* Header */}
       <View className="flex-row items-center px-5 pt-3 pb-3 gap-3">
         <TouchableOpacity
           onPress={() => router.back()}
           hitSlop={8}
-          className="w-10 h-10 rounded-full bg-white border border-[#E8E6DF] items-center justify-center"
+          className="w-10 h-10 rounded-full bg-card border border-line items-center justify-center"
         >
-          <Feather name="arrow-left" size={18} color="#1A1D26" />
+          <Feather name="arrow-left" size={18} color={colors.ink} />
         </TouchableOpacity>
-        <Text className="text-brand-bg text-lg font-medium">{t("home.monthlyReport")}</Text>
+        <Text className="text-ink text-lg font-medium">{t("home.monthlyReport")}</Text>
       </View>
 
       {/* Bulan terpilih: tap untuk lompat ke bulan mana pun */}
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() => setPickerOpen(true)}
-        className="mx-5 bg-white rounded-xl border border-[#E8E6DF] py-3 px-4 flex-row items-center justify-between"
+        className="mx-5 bg-card rounded-xl border border-line py-3 px-4 flex-row items-center justify-between"
       >
         {/* Panah di tepi = penanda halaman bisa digeser */}
         <Feather
@@ -380,7 +384,7 @@ export default function ReportScreen() {
           style={{ opacity: canGoBack ? 1 : 0.2 }}
         />
         <View className="flex-row items-center gap-1.5">
-          <Text className="text-brand-bg text-sm font-medium">
+          <Text className="text-ink text-sm font-medium">
             {formatDate(month, "MMMM yyyy")}
           </Text>
           <Feather name="chevron-down" size={14} color="#8A8D96" />

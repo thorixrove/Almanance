@@ -19,7 +19,7 @@ export function FormSheetModal({
   onClose: () => void;
   children: React.ReactNode;
 }) {
-  const {t} = useTranslation()
+  const { t } = useTranslation();
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
@@ -39,10 +39,10 @@ export function FormSheetModal({
     <Modal visible={visible} animationType="slide" transparent statusBarTranslucent>
       <View className="flex-1 justify-end bg-black/40">
         <View
-          className="bg-brand-body rounded-t-2xl px-5 pt-5 pb-8"
+          className="bg-page rounded-t-2xl px-5 pt-5 pb-8"
           style={{ marginBottom: keyboardHeight }}
         >
-          <Text className="text-brand-bg text-base font-semibold mb-4">
+          <Text className="text-ink text-base font-semibold mb-4">
             {title}
           </Text>
 

@@ -2,7 +2,7 @@ import { useUpsertBudget } from "@/hooks/mutation/useBudgetMutations"
 import {Budget} from "@/lib/services/budgets"
 import { COLORS } from "@/constants/theme"
 import { parseAmount } from "@/lib/utils"
-import { FormSheetModal } from "./FormSheetModal"
+import { BottomSheet } from "./BottomSheet"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Text, TextInput, TouchableOpacity } from "react-native";
@@ -50,12 +50,12 @@ export function BudgetModal({
   }
 
   return(
-        <FormSheetModal
+        <BottomSheet
       visible={visible}
       title={budget ? t("budget.editTitle") : t("budget.setTitle")}
       onClose={onClose}
     >
-      <Text className="text-brand-bg text-xs font-medium mb-1.5">
+      <Text className="text-ink text-xs font-medium mb-1.5">
         {t("home.monthlyBudget")}
       </Text>
       <TextInput
@@ -68,7 +68,7 @@ export function BudgetModal({
         placeholderTextColor={COLORS.placeholder}
         keyboardType="numeric"
         autoFocus
-        className="bg-white border border-[#E8E6DF] rounded-xl px-4 py-3.5 mb-5 text-sm text-brand-bg"
+        className="bg-card border border-line rounded-xl px-4 py-3.5 mb-5 text-sm text-ink"
       />
 
       {error ? (
@@ -78,13 +78,13 @@ export function BudgetModal({
       <TouchableOpacity
         onPress={handleSave}
         disabled={saving}
-        className="bg-brand-bg rounded-xl py-4 items-center mb-3"
+        className="bg-solid rounded-xl py-4 items-center mb-3"
         activeOpacity={0.85}
       >
-        <Text className="text-white text-sm font-semibold">
+        <Text className="text-on-solid text-sm font-semibold">
           {saving ? t("common.saving") : t("budget.save")}
         </Text>
       </TouchableOpacity>
-    </FormSheetModal>
+    </BottomSheet>
   )
 }

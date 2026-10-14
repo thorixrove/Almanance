@@ -22,7 +22,7 @@ export async function authenticate(
 ) : Promise<boolean> {
     const result = await LocalAuthentication.authenticateAsync({
         promptMessage,
-        cancelLabel: "Batal",
+        cancelLabel: i18n.t("common.cancel"),
         disableDeviceFallback: false,
     })
     return result.success

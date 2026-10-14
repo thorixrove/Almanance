@@ -359,9 +359,6 @@ export default function HomeScreen() {
                           {getCategoryLabel(c.category)}
                         </Text>
                       </View>
-                      <Text className="text-ink text-[11px] font-medium">
-                        {formatPrice(c.amount, currency)}
-                      </Text>
                     </View>
                   ))}
                 </View>

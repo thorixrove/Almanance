@@ -68,9 +68,9 @@ export function ConversationHistory({
           </Text>
           <TouchableOpacity
             onPress={() => refetch()}
-            className="bg-brand-bg rounded-full px-5 py-2"
+            className="bg-solid rounded-full px-5 py-2"
           >
-            <Text className="text-white text-sm">{t("report.tryAgain")}</Text>
+            <Text className="text-on-solid text-sm">{t("report.tryAgain")}</Text>
           </TouchableOpacity>
         </View>
       ) : conversations.length === 0 ? (
@@ -88,14 +88,14 @@ export function ConversationHistory({
               onPress={() => onSelect(item.id)}
               className={`flex-row items-center rounded-2xl px-3.5 py-3 mb-2 border ${
                 isActive
-                  ? "bg-white border-[#4A9EFF]"
-                  : "bg-white border-[#E8E6DF]"
+                  ? "bg-card border-[#4A9EFF]"
+                  : "bg-card border-line"
               }`}
             >
               <Feather name="message-circle" size={18} color="#8A8D96" />
               <View className="flex-1 mx-3">
                 <Text
-                  className="text-brand-bg text-sm font-medium"
+                  className="text-ink text-sm font-medium"
                   numberOfLines={1}
                 >
                   {item.title}

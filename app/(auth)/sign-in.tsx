@@ -95,7 +95,7 @@ export default function SignIn() {
         return (
                 <KeyboardAvoidingView
         behavior={Platform.OS === "android" ? "padding" : "height"}
-        className="flex-1 bg-brand-body"
+        className="flex-1 bg-page"
       >
         <View className="flex-1 justify-center px-6 -mt-16">
           <Image
@@ -103,7 +103,7 @@ export default function SignIn() {
             className="w-36 h-16 mb-8"
             resizeMode="contain"
           />
-          <Text className="text-3xl font-bold text-[#1A1D26] mb-2 leading-tight">
+          <Text className="text-3xl font-bold text-ink mb-2 leading-tight">
             {t("auth.verifyTitle")}
           </Text>
 
@@ -113,7 +113,7 @@ export default function SignIn() {
             render={({ field: { value, onChange } }) => {
               return (
                 <TextInput
-                  className="border border-[#E8E6DF] bg-white rounded-xl px-4 py-3 mb-2 text-[#1A1D26]"
+                  className="border border-line bg-card rounded-xl px-4 py-3 mb-2 text-ink"
                   placeholder={t("auth.codePlaceholder")}
                   placeholderTextColor="#8A8D96"
                   value={value}
@@ -163,7 +163,7 @@ export default function SignIn() {
   return (
       <KeyboardAvoidingView
       behavior={Platform.OS === "android" ? "padding" : "height"}
-      className="flex-1 bg-brand-body"
+      className="flex-1 bg-page"
     >
       <View className="flex-1 justify-center px-6 -mt-16">
         <Image
@@ -171,10 +171,10 @@ export default function SignIn() {
           className="w-36 h-16 mb-8"
           resizeMode="contain"
         />
-        <Text className="text-3xl font-bold text-[#1A1D26] mb-2 leading-tight">
+        <Text className="text-3xl font-bold text-ink mb-2 leading-tight">
           {t("auth.welcomeBack")}
         </Text>
-        <Text className="text-brand-text-muted text-base mb-8">
+        <Text className="text-subtle text-base mb-8">
           {t("auth.signInSubtitle")}
         </Text>
 
@@ -184,7 +184,7 @@ export default function SignIn() {
           render={({ field: { value, onChange } }) => {
             return (
               <TextInput
-                className="border border-[#E8E6DF] bg-white rounded-xl px-4 py-3 mb-2 text-[#1A1D26]"
+                className="border border-line bg-card rounded-xl px-4 py-3 mb-2 text-ink"
                 placeholder={t("auth.email")}
                 placeholderTextColor="#8A8D96"
                 value={value}
@@ -212,7 +212,7 @@ export default function SignIn() {
             return (
               <View className="relative justify-center mb-2">
                 <TextInput
-                  className="border border-[#E8E6DF] bg-white rounded-xl px-4 py-3 pr-12 text-[#1A1D26]"
+                  className="border border-line bg-card rounded-xl px-4 py-3 pr-12 text-ink"
                   placeholder={t("auth.password")}
                   placeholderTextColor="#8A8D96"
                   value={value}
@@ -259,7 +259,7 @@ export default function SignIn() {
         </TouchableOpacity>
 
         <View className="flex-row justify-center">
-          <Text className="text-brand-text-muted">
+          <Text className="text-subtle">
             {t("auth.noAccount")}{" "}
           </Text>
           <Link href="/sign-up">

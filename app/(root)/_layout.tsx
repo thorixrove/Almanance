@@ -5,11 +5,13 @@ import { useEffect, useState } from 'react'
 import { useUserSync } from '@/hooks/useUserSync'
 import { ActivityIndicator, AppState, View } from 'react-native'
 import { LockScreen } from '@/components/LockScreen'
+import { useThemeColors } from '@/components/ThemeProvider'
 
 
 
 export default function RootGroupLayout() {
     const { isSignedIn, isLoaded} = useAuth()
+    const colors = useThemeColors()
     const needsOnboarding = useUserStore((state) => state.needsOnboarding)
     const biometricEnabled = useUserStore((state) => state.biometricEnabled)
     const isLocked = useUserStore((state) => state.isLocked)
@@ -42,7 +44,7 @@ export default function RootGroupLayout() {
   if (!isSignedIn) return <Redirect href="/sign-in"/>
   if (!minLoadDone || needsOnboarding === null || biometricEnabled === null) return (
     <View className='flex-1 bg-brand-body items-center justify-center'>
-      <ActivityIndicator size="large" color="#1A1D26"/>
+      <ActivityIndicator size="large" color={colors.ink}/>
     </View>
   )
   if (needsOnboarding && pathname !== "/onboarding") return <Redirect href="/(root)/onboarding"/>

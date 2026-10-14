@@ -64,11 +64,11 @@ export function DateRangeSheet({
         <TouchableOpacity
             onPress={handleApplyCustom}
             disabled={!start}
-            className={`rounded-xl py-4 items-center ${start ? "bg-brand-bg" : "bg-[#D5D2C8]"
+            className={`rounded-xl py-4 items-center ${start ? "bg-solid" : "bg-line"
                 }`}
             activeOpacity={0.85}
         >
-            <Text className="text-white text-sm font-semibold">{t("dateRange.apply")}</Text>
+            <Text className="text-on-solid text-sm font-semibold">{t("dateRange.apply")}</Text>
         </TouchableOpacity>
     ) : undefined
 
@@ -91,7 +91,7 @@ export function DateRangeSheet({
                             : t("dateRange.pickStart")
                         }
                     </Text>
-                    <View className="bg-white border border-[#E8E6DF] rounded-xl mb-4 overflow-hidden">
+                    <View className="bg-card border border-line rounded-xl mb-4 overflow-hidden">
                         <DateTimePicker
                             mode="range"
                             startDate={start}
