@@ -268,8 +268,8 @@ export default function AssistantScreen() {
             placeholderTextColor="#8A8D96"
             editable={!sending}
             className="flex-1 bg-card border border-line rounded-full px-4 py-3 text-sm text-ink"
-            onSubmitEditing={() => sendMessage(input)}
-            returnKeyLabel="send"
+            returnKeyType="done"
+            submitBehavior="blurAndSubmit"
           />
           <TouchableOpacity
             onPress={() => sendMessage(input)}

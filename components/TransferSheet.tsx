@@ -1,7 +1,7 @@
 import { COLORS } from "@/constants/theme"
 import { useCreateTransfer } from "@/hooks/mutation/useTransferMutations"
 import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery"
-import { formatPrice, parseAmount } from "@/lib/utils"
+import { formatAmountInput, formatPrice, parseAmount } from "@/lib/utils"
 import { useUserStore } from "@/store/useStore"
 import { Feather } from "@expo/vector-icons"
 import { formatDate } from "@/lib/i18n/dateLocale"
@@ -178,7 +178,7 @@ export function TransferSheet({
             value={amount}
             onChangeText={(v) => {
               setError("")
-              setAmount(v)
+              setAmount(formatAmountInput(v))
             }}
             placeholder="0"
             placeholderTextColor={COLORS.placeholder}
