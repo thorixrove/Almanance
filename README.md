@@ -4,7 +4,7 @@ Aplikasi pencatat keuangan pribadi berbasis React Native (Expo). Catat pemasukan
 
 ## Fitur
 
-- **Autentikasi** email dan password dengan verifikasi kode (Clerk)
+- **Autentikasi** tanpa password: masuk dan daftar cukup dengan email, lalu verifikasi kode 6 digit yang dikirim ke email (Clerk Email Code)
 - **Onboarding**: pilih mata uang dan isi saldo awal
 - **Home**: total saldo, ringkasan pemasukan dan pengeluaran bulan ini, progres budget, pie chart per kategori, transaksi terbaru
 - **Tambah transaksi**:
@@ -71,6 +71,8 @@ supabase/       Edge Function dan SQL
 ## Setup Supabase
 
 ### 1. Integrasi Clerk
+
+Di Clerk Dashboard, aktifkan **Email address** dengan metode verifikasi **Email verification code**, dan matikan **Password**. Aktifkan juga **First name** dan **Last name** sebagai required.
 
 Di Supabase Dashboard buka **Authentication → Sign In / Up → Third Party Auth**, lalu tambahkan Clerk. Dengan ini Supabase menerima token Clerk, dan kebijakan RLS bisa memakai `auth.jwt()->>'sub'` sebagai id pengguna.
 
