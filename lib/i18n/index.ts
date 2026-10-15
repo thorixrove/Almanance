@@ -6,6 +6,8 @@ import id from "./locales/id"
 
 export type Language = "en" | "id"
 
+export type LanguagePreference = "system" | Language
+
 export const LANGUAGES: { code: Language; label: string }[] = [
   { code: "id", label: "Indonesia" },
   { code: "en", label: "English" },
@@ -14,7 +16,7 @@ export const LANGUAGES: { code: Language; label: string }[] = [
 const LANGUAGE_KEY = "app_language"
 
 // Bahasa perangkat, tanpa native module tambahan (tidak perlu rebuild).
-function getDeviceLanguage(): Language {
+export function getDeviceLanguage(): Language {
   try {
     const locale = Intl.DateTimeFormat().resolvedOptions().locale
     return locale.toLowerCase().startsWith("id") ? "id" : "en"
@@ -23,18 +25,24 @@ function getDeviceLanguage(): Language {
   }
 }
 
-export async function getSavedLanguage(): Promise<Language> {
+export function resolveLanguage(preference: LanguagePreference): Language {
+  return preference === "system" ? getDeviceLanguage() : preference
+}
+
+export async function getSavedLanguagePreference(): Promise<LanguagePreference> {
   try {
     const value = await SecureStore.getItemAsync(LANGUAGE_KEY)
-    if (value === "id" || value === "en") return value
+    if (value === "id" || value === "en" || value === "system") return value
   } catch {
     // abaikan, pakai bahasa perangkat
   }
-  return getDeviceLanguage()
+  return "system"
 }
 
-export async function saveLanguage(language: Language): Promise<void> {
-  await SecureStore.setItemAsync(LANGUAGE_KEY, language)
+export async function saveLanguagePreference(
+  preference: LanguagePreference
+): Promise<void> {
+  await SecureStore.setItemAsync(LANGUAGE_KEY, preference)
 }
 
 i18n.use(initReactI18next).init({

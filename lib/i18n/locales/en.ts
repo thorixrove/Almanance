@@ -164,6 +164,7 @@ const en = {
     welcomeBack: "Welcome back",
     signInSubtitle: "Sign in to your account",
     email: "Email Address",
+    password: "Password",
     signIn: "Sign In",
     signUp: "Sign Up",
     noAccount: "Don't have an account?",
@@ -182,14 +183,9 @@ const en = {
     lastNameRequired: "Last name is required.",
     emailInvalid: "Enter a valid email.",
     emailRequired: "Email is required.",
+    passwordMin: "Password must be at least 8 characters",
+    passwordRequired: "Password is required.",
     codeRequired: "Enter the verification code.",
-    codeInvalid: "The code must be 6 digits.",
-    sendCode: "Send code to email",
-    signInVerifySubtitle: "Enter the 6-digit code we sent to {{email}}",
-    codeResent: "A new code has been sent.",
-    accountNotFound: "No account found with this email.",
-    tooManyRequests: "Too many code requests. Please wait a few minutes and try again.",
-    resendIn: "Resend code in {{seconds}}s",
   },
   onboarding: {
     title: "Let's get you set up",
@@ -203,6 +199,7 @@ const en = {
     balanceInvalid: "Please enter a valid balance.",
   },
   currencyPicker: {
+    title: "Choose currency",
     search: "Search currency",
   },
   assistant: {
@@ -310,6 +307,7 @@ const en = {
   },
   language: {
     pickerTitle: "Choose language",
+    system: "System default",
     updateFailed: "Couldn't change the language.",
   },
 }

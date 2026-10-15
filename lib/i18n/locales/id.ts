@@ -168,6 +168,7 @@ const id: Translation = {
     welcomeBack: "Selamat datang kembali",
     signInSubtitle: "Masuk ke akun Anda",
     email: "Alamat Email",
+    password: "Kata Sandi",
     signIn: "Masuk",
     signUp: "Daftar",
     noAccount: "Belum punya akun?",
@@ -186,14 +187,9 @@ const id: Translation = {
     lastNameRequired: "Nama belakang wajib diisi.",
     emailInvalid: "Masukkan email yang valid.",
     emailRequired: "Email wajib diisi.",
+    passwordMin: "Kata sandi minimal 8 karakter",
+    passwordRequired: "Kata sandi wajib diisi.",
     codeRequired: "Masukkan kode verifikasi.",
-    codeInvalid: "Kode harus 6 digit angka.",
-    sendCode: "Kirim kode ke email",
-    signInVerifySubtitle: "Masukkan kode 6 digit yang kami kirim ke {{email}}",
-    codeResent: "Kode baru sudah dikirim.",
-    accountNotFound: "Akun dengan email ini belum terdaftar.",
-    tooManyRequests: "Terlalu banyak permintaan kode. Tunggu beberapa menit lalu coba lagi.",
-    resendIn: "Kirim ulang kode dalam {{seconds}} detik",
   },
   onboarding: {
     title: "Mari siapkan akun Anda",
@@ -207,6 +203,7 @@ const id: Translation = {
     balanceInvalid: "Masukkan saldo yang valid.",
   },
   currencyPicker: {
+    title: "Pilih mata uang",
     search: "Cari mata uang",
   },
   assistant: {
@@ -314,6 +311,7 @@ const id: Translation = {
   },
   language: {
     pickerTitle: "Pilih bahasa",
+    system: "Ikuti sistem",
     updateFailed: "Tidak dapat mengganti bahasa.",
   },
 }

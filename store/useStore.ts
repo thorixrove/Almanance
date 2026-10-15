@@ -1,6 +1,12 @@
 import {create} from "zustand"
 import { getBiometricEnabled, setBiometricEnabled } from "@/lib/biometric"
-import i18n, { getSavedLanguage, saveLanguage, type Language } from "@/lib/i18n"
+import i18n, {
+    getSavedLanguagePreference,
+    resolveLanguage,
+    saveLanguagePreference,
+    type Language,
+    type LanguagePreference,
+} from "@/lib/i18n"
 import { applyThemeMode, getSavedThemeMode, saveThemeMode, type ThemeMode } from "@/lib/theme"
 
 interface UserStore {
@@ -14,8 +20,9 @@ interface UserStore {
     setThemeMode: (mode: ThemeMode) => Promise<void>
 
     language: Language
+    languagePreference: LanguagePreference
     hydrateLanguage: () => Promise<void>
-    setLanguage: (language: Language ) => Promise<void>
+    setLanguage: (preference: LanguagePreference) => Promise<void>
 
     biometricEnabled: boolean | null
     isLocked: boolean
@@ -46,17 +53,20 @@ export const useUserStore = create<UserStore>((set, get) => ({
     },
 
     language: (i18n.language as Language) ?? "en",
+    languagePreference: "system",
 
     hydrateLanguage: async () => {
-        const saved = await getSavedLanguage()
-        await i18n.changeLanguage(saved)
-        set({ language: saved})
+        const preference = await getSavedLanguagePreference()
+        const resolved = resolveLanguage(preference)
+        await i18n.changeLanguage(resolved)
+        set({ language: resolved, languagePreference: preference})
     },
 
-    setLanguage: async (language) => {
-        await saveLanguage(language)
-        await i18n.changeLanguage(language)
-        set({ language})
+    setLanguage: async (preference) => {
+        const resolved = resolveLanguage(preference)
+        await saveLanguagePreference(preference)
+        await i18n.changeLanguage(resolved)
+        set({ language: resolved, languagePreference: preference})
     },
 
     biometricEnabled: null,
