@@ -58,3 +58,27 @@ export const parseAmount = (input: string): number => {
     const result = Number(normalized)
     return Number.isFinite(result) ? result : NaN
 }
+
+export const formatAmountInput = (input: string): string => {
+    const cleaned = input.replace(/[^\d,]/g, "")
+    const commaIndex = cleaned.indexOf(",")
+
+    const rawInt = commaIndex === -1 ? cleaned : cleaned.slice(0, commaIndex)
+    const rawDec =
+
+        commaIndex === -1 ? null : cleaned.slice(commaIndex + 1).replace(/,/g, "").slice(0, 2)
+
+    const inDigits = rawInt.replace(/^0+(?=\d)/, "")
+    const grouped = inDigits.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+
+    if (rawDec === null) return grouped
+    return `${grouped || "0"},${rawDec}`
+}
+
+
+export const amountToInput = (value: number): string => {
+    if (!Number.isFinite(value)) return ""
+    if (Number.isInteger(value)) return formatAmountInput(String(value))
+    const [intPart, decPart] = value.toFixed(2).split(".")
+    return `${formatAmountInput(intPart)},${decPart}`
+}

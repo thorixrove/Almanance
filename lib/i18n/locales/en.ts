@@ -199,6 +199,7 @@ const en = {
     balanceInvalid: "Please enter a valid balance.",
   },
   currencyPicker: {
+    title: "Choose currency",
     search: "Search currency",
   },
   assistant: {
@@ -306,6 +307,7 @@ const en = {
   },
   language: {
     pickerTitle: "Choose language",
+    system: "System default",
     updateFailed: "Couldn't change the language.",
   },
 }

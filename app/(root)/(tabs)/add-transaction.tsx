@@ -21,13 +21,13 @@ import {
   extractTransactionFromReceipt,
 } from "@/lib/services/extractTransaction";
 import { InputMethod } from "@/lib/services/transactions";
-import { parseAmount } from "@/lib/utils";
+import { amountToInput, formatAmountInput, parseAmount } from "@/lib/utils";
 import { useUser } from "@clerk/expo";
 import { Feather } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isValid } from "date-fns";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   ActivityIndicator,
@@ -113,12 +113,22 @@ export default function AddTransaction() {
     watch,
     setValue,
     reset: resetForm,
+    clearErrors,
     formState: {errors},
   } = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
-    mode: "onBlur",
+    // Peringatan hanya muncul setelah menekan Simpan, dan hilang begitu isian diperbaiki.
+    mode: "onSubmit",
+    reValidateMode: "onChange",
     defaultValues: DEFAULT_VALUES([]),
   })
+
+  // Tab tetap terpasang, jadi bersihkan peringatan saat user meninggalkan layar ini.
+  useFocusEffect(
+    useCallback(() => {
+      return () => clearErrors()
+    }, [clearErrors])
+  )
 
   const type = watch("type")
   const category = watch("category")
@@ -139,7 +149,7 @@ export default function AddTransaction() {
 
     if (result.type) setValue("type", result.type)
       if (isValidCategory(result.category)) setValue("category", result.category)
-        if (result.amount != null) setValue("amount", String(result.amount))
+        if (result.amount != null) setValue("amount", amountToInput(Number(result.amount)))
           if (result.description) setValue("description", result.description)
             if (result.date) {
               const parseDate = new Date(result.date)
@@ -329,7 +339,7 @@ export default function AddTransaction() {
               value={value}
               onChangeText={(v) => {
                 setError("")
-                onChange(v)
+                onChange(formatAmountInput(v))
               }}
               onBlur={onBlur}
               placeholder="0"

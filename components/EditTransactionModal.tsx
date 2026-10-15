@@ -15,7 +15,7 @@ import type {
   TransactionType,
   UpdateTransactionPayload,
 } from "@/lib/services/transactions"
-import { parseAmount } from "@/lib/utils"
+import { amountToInput, formatAmountInput, parseAmount } from "@/lib/utils"
 import { Feather } from "@expo/vector-icons"
 import { useEffect, useState } from "react"
 import { Text, TextInput, TouchableOpacity, View } from "react-native"
@@ -27,12 +27,6 @@ const TYPE_OPTIONS = [
   { key: "EXPENSE" as const, labelKey: "transactions.expense" },
   { key: "INCOME" as const, labelKey: "transactions.income" },
 ]
-
-// Nominal dari database bisa berupa desimal (mis. 15000.5). Dibuat 2 digit
-// desimal supaya parseAmount tidak salah mengira "1500.123" sebagai ribuan.
-function amountToInput(value: number) {
-  return Number.isInteger(value) ? String(value) : value.toFixed(2)
-}
 
 export function EditTransactionModal({
   visible,
@@ -185,7 +179,7 @@ export function EditTransactionModal({
           value={amount}
           onChangeText={(v) => {
             setError("")
-            setAmount(v)
+            setAmount(formatAmountInput(v))
           }}
           placeholder="0"
           placeholderTextColor={COLORS.placeholder}

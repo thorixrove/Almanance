@@ -1,7 +1,7 @@
 import { useUpsertBudget } from "@/hooks/mutation/useBudgetMutations"
 import {Budget} from "@/lib/services/budgets"
 import { COLORS } from "@/constants/theme"
-import { parseAmount } from "@/lib/utils"
+import { amountToInput, formatAmountInput, parseAmount } from "@/lib/utils"
 import { BottomSheet } from "./BottomSheet"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -26,7 +26,7 @@ export function BudgetModal({
 
   useEffect(() => {
     if (visible) {
-      setAmount(budget ? String(budget.amount): "")
+      setAmount(budget ? amountToInput(Number(budget.amount)) : "")
       setError("")
     }
   }, [visible, budget])
@@ -62,7 +62,7 @@ export function BudgetModal({
         value={amount}
         onChangeText={(v) => {
           setError("");
-          setAmount(v);
+          setAmount(formatAmountInput(v));
         }}
         placeholder={t("budget.placeholder")}
         placeholderTextColor={COLORS.placeholder}

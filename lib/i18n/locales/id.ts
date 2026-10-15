@@ -203,6 +203,7 @@ const id: Translation = {
     balanceInvalid: "Masukkan saldo yang valid.",
   },
   currencyPicker: {
+    title: "Pilih mata uang",
     search: "Cari mata uang",
   },
   assistant: {
@@ -310,6 +311,7 @@ const id: Translation = {
   },
   language: {
     pickerTitle: "Pilih bahasa",
+    system: "Ikuti sistem",
     updateFailed: "Tidak dapat mengganti bahasa.",
   },
 }

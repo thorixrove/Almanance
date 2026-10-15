@@ -8,7 +8,7 @@ import { LanguagePicker } from '@/components/LanguagePicker'
 import { ThemePicker } from '@/components/ThemePicker'
 import { useThemeColors } from '@/components/ThemeProvider'
 import { type ThemeMode } from '@/lib/theme'
-import { LANGUAGES, type Language } from '@/lib/i18n'
+import { LANGUAGES, type LanguagePreference } from '@/lib/i18n'
 import { useTranslation } from 'react-i18next'
 import { useSetDefaultAccount  } from '@/hooks/mutation/useAccountMutations'
 import { useAccountsQuery } from '@/hooks/queries/useAccountsQuery'
@@ -94,7 +94,7 @@ export default function ProfileScreen() {
   const setBiometricLock = useUserStore((state) => state.setBiometricLock)
   const themeMode = useUserStore((state) => state.themeMode)
   const setThemeMode = useUserStore((state) => state.setThemeMode)
-  const language = useUserStore((state) => state.language)
+  const languagePreference = useUserStore((state) => state.languagePreference)
   const setLanguage = useUserStore((state) => state.setLanguage)
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -214,7 +214,7 @@ export default function ProfileScreen() {
     }
   }
 
-  const handleLanguageSelect = async (code: Language) => {
+  const handleLanguageSelect = async (code: LanguagePreference) => {
     setLanguagePickerOpen(false)
     try {
       await setLanguage(code)
@@ -337,7 +337,11 @@ export default function ProfileScreen() {
           <Row
             icon="globe"
             label={t("profile.language")}
-            value={LANGUAGES.find((l) => l.code === language)?.label}
+            value={
+              languagePreference === "system"
+                ? t("language.system")
+                : LANGUAGES.find((l) => l.code === languagePreference)?.label
+            }
             onPress={() => setLanguagePickerOpen(true)}
           />
           <Row
@@ -393,7 +397,7 @@ export default function ProfileScreen() {
 
           <LanguagePicker
           visible={languagePickerOpen}
-          selected={language}
+          selected={languagePreference}
           onSelect={handleLanguageSelect}
           onClose={() => setLanguagePickerOpen(false)}
           />

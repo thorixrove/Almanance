@@ -1,7 +1,7 @@
 import { ALL_CURRENCIES, CurrencyPicker } from '@/components/CurrencyPicker'
 import { useSupabase } from '@/hooks/useSupabase'
 import { onboardingSchema, OnboardingFormValues } from "@/lib/schemas/onboarding"
-import { parseAmount } from '@/lib/utils'
+import { formatAmountInput, parseAmount } from '@/lib/utils'
 import { useUserStore } from '@/store/useStore'
 import { useUser } from '@clerk/expo'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -138,7 +138,7 @@ export default function OnBoardingScreen() {
                 value={value}
                 onChangeText={(v) => {
                   setError("")
-                  onChange(v)
+                  onChange(formatAmountInput(v))
                 }}
                   placeholder={t("onboarding.balancePlaceholder")}
                   placeholderTextColor="#8A8D96"
