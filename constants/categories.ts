@@ -142,7 +142,16 @@ export const CATEGORIES = {
 
 // ── DERIVED HELPERS ───────────────────────────────────────────
 
-export type CategoryKey = keyof typeof CATEGORIES;
+// Key kategori bawaan (food, salary, ...).
+export type BuiltInCategoryKey = keyof typeof CATEGORIES;
+
+// transactions.category bisa berisi key bawaan atau key kategori custom
+// ("c_xxxxxxxxxxxx", lihat tabel custom_categories). `string & {}` menjaga
+// autocomplete key bawaan tetapi tetap menerima string lain.
+export type CategoryKey = BuiltInCategoryKey | (string & {});
+
+export const isBuiltInCategory = (key: string): key is BuiltInCategoryKey =>
+  Object.prototype.hasOwnProperty.call(CATEGORIES, key);
 
 export const EXPENSE_CATEGORIES = Object.entries(CATEGORIES)
   .filter(([, v]) => v.type === "EXPENSE")
@@ -152,13 +161,16 @@ export const INCOME_CATEGORIES = Object.entries(CATEGORIES)
   .filter(([, v]) => v.type === "INCOME")
   .map(([k, v]) => ({ key: k as CategoryKey, ...v }));
 
-// single lookup by key - use this everywhere instead of CATEGORIES[key]
-export const getCategoryConfig = (key: CategoryKey) => CATEGORIES[key];
+// Lookup kategori BAWAAN. Key yang tidak dikenal (mis. kategori custom yang
+// belum termuat) jatuh ke "other" supaya tidak pernah undefined.
+// Untuk kategori custom pakai hook useCategories().
+export const getCategoryConfig = (key: CategoryKey) =>
+  isBuiltInCategory(key) ? CATEGORIES[key] : CATEGORIES.other;
 
 // label untuk ditampilkan di UI, mengikuti bahasa aktif.
 // (CATEGORIES[key].label tetap bahasa Inggris, dipakai untuk prompt AI.)
 export const getCategoryLabel = (key: CategoryKey) =>
-  i18n.t(`categories.${key}`);
+  i18n.t(`categories.${isBuiltInCategory(key) ? key : "other"}`);
 
 // used in Groq prompts - gives the model the full list of valid keys
 export const CATEGORY_KEYS_EXPENSE = EXPENSE_CATEGORIES.map((c) => c.key);

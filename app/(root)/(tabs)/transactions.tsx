@@ -24,7 +24,7 @@ import {
 } from "date-fns"
 import { useRouter } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { getCategoryLabel } from "@/constants/categories"
+import { useCategories } from "@/hooks/useCategories"
 import { formatDate } from "@/lib/i18n/dateLocale"
 import { useThemeColors } from "@/components/ThemeProvider"
 import { useCallback, useMemo, useState } from "react"
@@ -163,18 +163,26 @@ export default function TransactionsScreen() {
     [transactions, accounts]
   )
 
+  const { getCategory } = useCategories()
+
   const filterTransactions = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return listItems
-    return listItems.filter(
-      (tx) =>
+    return listItems.filter((tx) => {
+      const category = getCategory(
+        tx.category,
+        tx.type === "INCOME" || tx.type === "TRANSFER_IN" ? "INCOME" : "EXPENSE"
+      )
+      return (
         tx.description?.toLowerCase().includes(q) ||
-        tx.category.toLowerCase().includes(q) ||
-        getCategoryLabel(tx.category).toLowerCase().includes(q) ||
+        // key mentah hanya untuk kategori bawaan (key custom "c_xxx" hanya noise)
+        (!category.isCustom && tx.category.toLowerCase().includes(q)) ||
+        category.label.toLowerCase().includes(q) ||
         tx.transfer?.fromName.toLowerCase().includes(q) ||
         tx.transfer?.toName.toLowerCase().includes(q)
-    )
-  }, [listItems, search, t])
+      )
+    })
+  }, [listItems, search, t, getCategory])
 
   const chart = useMemo(() => buildChartBuckets(dateRange), [dateRange, i18n.language])
 

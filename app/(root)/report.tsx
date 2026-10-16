@@ -1,4 +1,4 @@
-import { getCategoryConfig, getCategoryLabel } from "@/constants/categories"
+import { useCategories } from "@/hooks/useCategories"
 import i18n from "@/lib/i18n"
 import { formatDate } from "@/lib/i18n/dateLocale"
 import { useMonthlyReportQuery } from "@/hooks/queries/useMonthlyReportQuery"
@@ -83,7 +83,8 @@ function CategoryRow({
   isLast: boolean
 }) {
   const { t } = useTranslation()
-  const config = getCategoryConfig(item.category)
+  const { getCategory } = useCategories()
+  const config = getCategory(item.category, "EXPENSE")
   const barWidth =
     item.current > 0 ? `${Math.max((item.current / maxValue) * 100, 2)}%` : "0%"
 
@@ -93,7 +94,7 @@ function CategoryRow({
         <View className="flex-row items-center gap-2 flex-1">
           <Text className="text-base">{config.icon}</Text>
           <Text className="text-ink text-[13px] font-medium" numberOfLines={1}>
-            {getCategoryLabel(item.category)}
+            {config.label}
           </Text>
         </View>
         <DeltaBadge delta={item} />
