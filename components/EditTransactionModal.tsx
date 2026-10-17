@@ -1,9 +1,5 @@
-import {
-  CategoryKey,
-  EXPENSE_CATEGORIES,
-  INCOME_CATEGORIES,
-  getCategoryLabel,
-} from "@/constants/categories"
+import { CategoryKey } from "@/constants/categories"
+import { useCategories } from "@/hooks/useCategories"
 import { formatDate } from "@/lib/i18n/dateLocale"
 import { useTranslation } from "react-i18next"
 import { useThemeColors } from "@/components/ThemeProvider"
@@ -42,6 +38,7 @@ export function EditTransactionModal({
   const { t } = useTranslation()
   const colors = useThemeColors()
   const { data: accounts = [] } = useAccountsQuery()
+  const { expense: expenseCategories, income: incomeCategories } = useCategories()
   const { mutateAsync: updateTransaction, isPending: saving } =
     useUpdateTransaction()
 
@@ -70,11 +67,11 @@ export function EditTransactionModal({
     }
   }, [visible, transaction])
 
-  const categories = type === "INCOME" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+  const categories = type === "INCOME" ? incomeCategories : expenseCategories
 
   const handleTypeChange = (next: TransactionType) => {
     setType(next)
-    const list = next === "INCOME" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+    const list = next === "INCOME" ? incomeCategories : expenseCategories
     // Kategori lama tidak berlaku di tipe baru, jadi pakai kategori pertama.
     if (!list.some((c) => c.key === category)) setCategory(list[0].key)
   }
@@ -195,7 +192,7 @@ export function EditTransactionModal({
           <PillGroup
             options={categories.map((c) => ({
               key: c.key,
-              label: getCategoryLabel(c.key),
+              label: c.label,
               icon: c.icon,
             }))}
             value={category}

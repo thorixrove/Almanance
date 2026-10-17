@@ -64,7 +64,7 @@ export function createCategoryResolver(
 
     const expense = [
         ...builtIn.filter((c) => c.type === "EXPENSE"),
-        ...customInfos.filter((c) => c.type === "INCOME"),
+        ...customInfos.filter((c) => c.type === "EXPENSE"),
     ]
     const income = [
         ...builtIn.filter((c) => c.type === "INCOME"),

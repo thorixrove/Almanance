@@ -17,8 +17,8 @@ export function useCreateCategory() {
     return useMutation({
         mutationFn: (payload: NewCustomCategory) =>
             createCustomCategory(supabase, user!.id, payload),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["categories"] })
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ["categories"] })
         },
     })
 }
@@ -35,12 +35,14 @@ export function useUpdateCategory() {
             id: string
             payload: UpdateCustomCategory
         }) => updateCustomCategory(supabase, id, payload),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["categories"] })
-        }
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ["categories"] })
+        },
     })
 }
 
+// Menghapus kategori juga mengubah category pada transaksi lama,
+// jadi daftar transaksi ikut di-refresh (mutasi menunggu refetch selesai).
 export function useDeleteCategory() {
     const supabase = useSupabase()
     const queryClient = useQueryClient()
@@ -50,7 +52,7 @@ export function useDeleteCategory() {
         onSuccess: async () => {
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ["categories"] }),
-                queryClient.invalidateQueries({ queryKey: ["transactions"] })
+                queryClient.invalidateQueries({ queryKey: ["transactions"] }),
             ])
         },
     })
