@@ -1,16 +1,16 @@
 import { AIActionCard } from "@/components/AIActionCard";
 import { CalendarPicker } from "@/components/CalendarPicker";
-import { AI_GRADIENT, AI_GRADIENT_REVERSE } from "@/constants/theme";
 import { PillGroup } from "@/components/PillGroup";
 import { ReceiptScannerModal } from "@/components/ReceiptScannerModal";
+import { useThemeColors } from "@/components/ThemeProvider";
 import { VoiceRecorderModal } from "@/components/VoiceRecorderModal";
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, CategoryKey, getCategoryLabel } from "@/constants/categories";
-import { formatDate } from "@/lib/i18n/dateLocale";
-import { useTranslation } from "react-i18next";
-import { useThemeColors } from "@/components/ThemeProvider"
+import { CategoryKey } from "@/constants/categories";
+import { AI_GRADIENT, AI_GRADIENT_REVERSE } from "@/constants/theme";
 import { useCreateTransactions } from "@/hooks/mutation/useTransactionMutations";
 import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery";
+import { useCategories } from "@/hooks/useCategories";
 import { useSupabase } from "@/hooks/useSupabase";
+import { formatDate } from "@/lib/i18n/dateLocale";
 import {
   TransactionFormValues,
   transactionSchema,
@@ -29,6 +29,7 @@ import { isValid } from "date-fns";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
@@ -135,7 +136,15 @@ export default function AddTransaction() {
   const accountId = watch("acccountId")
   const date = watch("date")
 
-  const categories = type === "INCOME" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+  const { expense: expenseCategories, income: incomeCategories } = useCategories()
+  const categories = type === "INCOME" ? incomeCategories : expenseCategories
+
+  // Kategori yang dipilih bisa hilang (mis. kategori custom baru dihapus di layar lain).
+  useEffect(() => {
+    if (!categories.some((c) => c.key === category)) {
+      setValue("category", categories[0].key)
+    }
+  }, [categories, category, setValue])
 
   useEffect(() => {
     if (accounts.length > 0) resetForm(DEFAULT_VALUES(accounts))
@@ -143,7 +152,7 @@ export default function AddTransaction() {
 
   const applyExtraction = (result: ExtractedTransaction) => {
     const categoryList =
-    result.type === "INCOME" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+    result.type === "INCOME" ? incomeCategories : expenseCategories
     const isValidCategory = (key: CategoryKey | null): key is CategoryKey =>
       !!key && categoryList.some((c) => c.key === key)
 
@@ -307,8 +316,8 @@ export default function AddTransaction() {
                   setValue(
                     "category",
                     opt.key === "INCOME"
-                    ? INCOME_CATEGORIES[0].key
-                    : EXPENSE_CATEGORIES[0].key
+                    ? incomeCategories[0].key
+                    : expenseCategories[0].key
                   )
                 }}
                 className={`flex-1 py-2 rounded-lg items-center ${
@@ -328,7 +337,7 @@ export default function AddTransaction() {
             </View>
 
             
-            <Text className="text-ink text-xs font-medium mb-1.5">
+            <Text className="text-ink text-xs font-medium leading-5 mb-1.5">
               {t("addTransaction.amount")}
             </Text>
             <Controller
@@ -357,23 +366,24 @@ export default function AddTransaction() {
             <View className="mb-4"/>
 
             {/* Category */}
-            <Text className="text-ink text-xs font-medium mb-1.5">
+            <Text className="text-ink text-xs font-medium leading-6 mb-1.5">
             {t("addTransaction.category")}
             </Text>
             <View>
               <PillGroup
               options={categories.map((c) => ({
                 key: c.key,
-                label: getCategoryLabel(c.key),
+                label: c.label,
                 icon: c.icon,
               }))}
               value={category}
               onChange={(key) => setValue("category", key)}
               />
             </View>
+            <View className="mb-3"/>
 
               {/* Account */}
-              <Text className="text-ink text-xs font-medium mb-1.5">
+              <Text className="text-ink text-xs font-medium leading-6 mb-1.5">
                 {t("addTransaction.account")}
               </Text>
               <View className="mb-1">
@@ -391,7 +401,7 @@ export default function AddTransaction() {
               <View className="mb-3"/>
 
               {/* Date */}
-              <Text className="text-ink text-xs font-medium mb-1.5">
+              <Text className="text-ink text-xs font-medium leading-6 mb-1.5">
                 {t("addTransaction.date")}
               </Text>
               <TouchableOpacity

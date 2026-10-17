@@ -1,6 +1,8 @@
 import { useBudgetQuery } from "@/hooks/queries/useBudgetQuery"
+import { useCategoriesQuery } from "@/hooks/queries/useCategoriesQuery"
 import { useTransactionsQuery } from "@/hooks/queries/useTransactionsQuery"
 import { askAssistant } from "@/lib/services/assistant"
+import { createCategoryResolver } from "@/lib/utils/categories"
 import { useUserStore } from "@/store/useStore"
 import { useUser } from "@clerk/expo"
 import { Feather } from "@expo/vector-icons"
@@ -90,6 +92,7 @@ export default function AssistantScreen() {
   const currency = useUserStore((s) => s.currency)
   const { refetch: refetchTransactions } = useTransactionsQuery()
   const { refetch: refetchBudget } = useBudgetQuery()
+  const { refetch: refetchCategories } = useCategoriesQuery()
   const keyboardHeight = useKeyboardHeight()
   const insets = useSafeAreaInsets()
   const adjustedKeyboardHeight = Math.max(keyboardHeight - insets.bottom, 0)
@@ -147,15 +150,23 @@ export default function AssistantScreen() {
     addMessage.mutate({ conversationId, role: "user", content: question })
 
     try {
-      const [{ data: transactions = [] }, { data: budgets = null }] =
-        await Promise.all([refetchTransactions(), refetchBudget()])
+      const [
+        { data: transactions = [] },
+        { data: budgets = null },
+        { data: customCategories = [] },
+      ] = await Promise.all([
+        refetchTransactions(),
+        refetchBudget(),
+        refetchCategories(),
+      ])
       const reply = await askAssistant(
         supabase,
         question,
         transactions,
         budgets,
         currency,
-        history
+        history,
+        createCategoryResolver(customCategories)
       )
       addMessage.mutate({ conversationId, role: "assistant", content: reply })
     } catch (error) {

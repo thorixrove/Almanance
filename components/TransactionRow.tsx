@@ -1,4 +1,4 @@
-import { getCategoryConfig, getCategoryLabel } from "@/constants/categories";
+import { useCategories } from "@/hooks/useCategories";
 import { Transaction } from "@/lib/services/transactions";
 import { isTransfer, ListTransaction } from "@/lib/utils/transfer";
 import { formatPrice } from "@/lib/utils";
@@ -90,8 +90,12 @@ function TransactionRowComponent({
 }) {
     const { t } = useTranslation()
     const colors = useThemeColors()
-    const config = getCategoryConfig(tx.category)
-    const categoryLabel = getCategoryLabel(tx.category)
+    const { getCategory } = useCategories()
+    const config = getCategory(
+      tx.category,
+      tx.type === "INCOME" || tx.type === "TRANSFER_IN" ? "INCOME" : "EXPENSE"
+    )
+    const categoryLabel = config.label
     const transfer = isTransfer(tx)
     // Transfer: TRANSFER_IN bertanda +, TRANSFER_OUT bertanda -, warna netral.
     const isIncome = tx.type === "INCOME" || tx.type === "TRANSFER_IN"

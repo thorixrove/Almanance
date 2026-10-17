@@ -26,7 +26,7 @@ import {
 } from "react-native";
 import { PieChart } from "react-native-gifted-charts"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { getCategoryConfig, getCategoryLabel } from "@/constants/categories"
+import { useCategories } from "@/hooks/useCategories"
 
 
 
@@ -138,6 +138,8 @@ export default function HomeScreen() {
     [transactions, accounts]
   )
 
+  const { getCategory } = useCategories()
+
   const expenseBreakedown = useMemo(() => {
     const map: Record<string, number> = {}
     monthTransactions
@@ -151,9 +153,9 @@ export default function HomeScreen() {
       .map(([category, amount]) => ({
         category: category as Transaction["category"],
         amount,
-        color: getCategoryConfig(category as Transaction["category"]).color,
+        color: getCategory(category as Transaction["category"], "EXPENSE").color,
       }))
-  }, [monthTransactions])
+  }, [monthTransactions, getCategory])
 
   return (
     <SafeAreaView className="flex-1 bg-hero" edges={["top"]}>
@@ -356,7 +358,7 @@ export default function HomeScreen() {
                           style={{ backgroundColor: c.color }}
                         />
                         <Text className="text-brand-text-secondary text-[11px]">
-                          {getCategoryLabel(c.category)}
+                          {getCategory(c.category, "EXPENSE").label}
                         </Text>
                       </View>
                     </View>

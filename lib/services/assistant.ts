@@ -1,4 +1,7 @@
-import { CategoryKey, getCategoryConfig } from "@/constants/categories";
+import {
+  createCategoryResolver,
+  type CategoryResolver,
+} from "../utils/categories";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Budget } from "./budgets";
 import type { Transaction } from "./transactions";
@@ -60,12 +63,12 @@ function summarize(transactions: Transaction[]): Totals {
   return totals;
 }
 
-function formatSummary(title: string, totals: Totals, currency: string) {
+function formatSummary(title: string, totals: Totals, currency: string, categories: CategoryResolver) {
   const categoryLines = Object.entries(totals.byCategory)
     .sort((a, b) => b[1] - a[1])
     .map(
       ([category, amount]) =>
-        `- ${getCategoryConfig(category as CategoryKey).label}: ${formatPrice(
+        `- ${categories.getCategory(category, "EXPENSE").englishLabel}: ${formatPrice(
           amount,
           currency
         )}`
@@ -82,7 +85,8 @@ ${categoryLines || "No expenses recorded."}`;
 function buildContext(
   transactions: Transaction[],
   budget: Budget | null,
-  currency: string
+  currency: string,
+  categories: CategoryResolver
 ) {
   const now = new Date();
   const thisMonthStart = startOfMonth(now);
@@ -104,9 +108,9 @@ function buildContext(
 
   const budgetLine = budget
     ? `${formatPrice(thisMonthTotals.expense, currency)} spent of ${formatPrice(
-        budget.amount,
-        currency
-      )} monthly budget`
+      budget.amount,
+      currency
+    )} monthly budget`
     : "No monthly budget set";
 
   // Transaksi dari awal bulan lalu sampai sekarang (data sudah urut terbaru dulu).
@@ -117,27 +121,31 @@ function buildContext(
       const description = tx.description
         ? ` | ${tx.description.slice(0, MAX_DESCRIPTION_LENGTH)}`
         : "";
-      return `- ${format(new Date(tx.date), "d MMM yyyy")} | ${tx.type} | ${
-        getCategoryConfig(tx.category).label
-      } | ${formatPrice(tx.amount, currency)}${description}`;
+      const categoryLabel = categories.getCategory(
+        tx.category,
+        tx.type === "INCOME" || tx.type === "TRANSFER_IN" ? "INCOME" : "EXPENSE"
+      ).englishLabel;
+      return `- ${format(new Date(tx.date), "d MMM yyyy")} | ${tx.type} | ${categoryLabel} | ${formatPrice(tx.amount, currency)}${description}`;
     })
     .join("\n");
 
   const context = `Today: ${format(now, "d MMM yyyy")}
 
 ${formatSummary(
-  `This month so far (${format(now, "MMMM yyyy")})`,
-  thisMonthTotals,
-  currency
-)}
+    `This month so far (${format(now, "MMMM yyyy")})`,
+    thisMonthTotals,
+    currency,
+    categories
+  )}
 
 ${formatSummary(
-  `Last month (${format(lastMonthStart, "MMMM yyyy")})`,
-  summarize(lastMonth),
-  currency
-)}
+    `Last month (${format(lastMonthStart, "MMMM yyyy")})`,
+    summarize(lastMonth),
+    currency,
+    categories
+  )}
 
-${formatSummary("Last 30 days", summarize(last30), currency)}
+${formatSummary("Last 30 days", summarize(last30), currency, categories)}
 
 Monthly budget:
 ${budgetLine}
@@ -155,9 +163,10 @@ export async function askAssistant(
   budget: Budget | null,
   currency: string,
   // Pesan sebelumnya, TANPA pertanyaan yang sedang diajukan.
-  history: AssistantHistoryItem[] = []
+  history: AssistantHistoryItem[] = [],
+  categories: CategoryResolver = createCategoryResolver()
 ) {
-  const context = buildContext(transactions, budget, currency);
+  const context = buildContext(transactions, budget, currency, categories);
 
   const { data, error } = await supabase.functions.invoke(FUNCTION_NAME, {
     body: {
