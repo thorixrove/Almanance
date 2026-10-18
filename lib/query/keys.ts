@@ -5,5 +5,6 @@ export const queryKeys = {
     transactions: (userId?: string, filters: TransactionFilters = {}) => 
     ["transactions", userId, filters] as const,
     budgets: (userId?: string) => ["budgets", userId] as const,
-    categories: (userId?: string) => ["categories", userId] as const
+    categories: (userId?: string) => ["categories", userId] as const,
+    goals: (userId?: string) => ["goals", userId] as const
 }

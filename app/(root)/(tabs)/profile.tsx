@@ -10,10 +10,10 @@ import { useThemeColors } from '@/components/ThemeProvider'
 import { type ThemeMode } from '@/lib/theme'
 import { LANGUAGES, type LanguagePreference } from '@/lib/i18n'
 import { useTranslation } from 'react-i18next'
-import { useSetDefaultAccount  } from '@/hooks/mutation/useAccountMutations'
+import { useSetDefaultAccount } from '@/hooks/mutation/useAccountMutations'
 import { useAccountsQuery } from '@/hooks/queries/useAccountsQuery'
 import { useSupabase } from '@/hooks/useSupabase'
-import { Account, AccountType} from "@/lib/services/accounts"
+import { Account, AccountType } from "@/lib/services/accounts"
 import { formatPrice } from '@/lib/utils'
 import { useUserStore } from '@/store/useStore'
 import { authenticate, getBiometricSupport } from '@/lib/biometric'
@@ -30,8 +30,8 @@ const ACCOUNT_ICON: Record<AccountType, keyof typeof Feather.glyphMap> = {
   SAVINGS: "shield"
 }
 
-function SectionLabel({ children}: { children: string}) {
-  return(
+function SectionLabel({ children }: { children: string }) {
+  return (
     <Text className="text-subtle text-[11px] uppercase tracking-wide mb-2 mt-6 mx-5">
       {children}
     </Text>
@@ -54,19 +54,18 @@ function Row({
   danger?: boolean
 }) {
   const colors = useThemeColors()
-  return(
-      <TouchableOpacity
+  return (
+    <TouchableOpacity
       onPress={onPress}
       disabled={!onPress}
       className="flex-row items-center bg-card px-4 py-3.5 border-b border-line-soft last:border-b-0"
     >
-          <View className="w-8 h-8 rounded-full bg-page items-center justify-center mr-3">
+      <View className="w-8 h-8 rounded-full bg-page items-center justify-center mr-3">
         <Feather name={icon} size={15} color={danger ? "#FF6B4A" : colors.icon} />
       </View>
       <Text
-        className={`flex-1 text-sm ${
-          danger ? "text-brand-coral" : "text-ink"
-        }`}
+        className={`flex-1 text-sm ${danger ? "text-brand-coral" : "text-ink"
+          }`}
       >
         {label}
       </Text>
@@ -76,14 +75,14 @@ function Row({
       {showChevron && onPress && (
         <Feather name="chevron-right" size={16} color={colors.subtle} />
       )}
-  </TouchableOpacity>
+    </TouchableOpacity>
   )
 }
 
 
 export default function ProfileScreen() {
-  const {user} = useUser()
-  const {signOut} = useAuth()
+  const { user } = useUser()
+  const { signOut } = useAuth()
   const router = useRouter()
   const { t } = useTranslation()
   const colors = useThemeColors()
@@ -141,7 +140,7 @@ export default function ProfileScreen() {
   const handlePickAvatar = async () => {
     if (!user) return
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if(!permission.granted) {
+    if (!permission.granted) {
       Alert.alert(
         t("profile.permissionNeeded"),
         t("profile.permissionMessage")
@@ -173,7 +172,7 @@ export default function ProfileScreen() {
   }
 
 
-  
+
 
   const handleSignOut = () => {
     Alert.alert(t("profile.signOut"), t("profile.signOutConfirm"), [
@@ -196,11 +195,11 @@ export default function ProfileScreen() {
   }
 
   const handleMadeDefault = async () => {
-    if(!editingAccount) return
+    if (!editingAccount) return
     try {
       await setDefaultAccount(editingAccount.id)
       closeModal()
-    } catch  {
+    } catch {
       Alert.alert(t("common.error"), t("profile.setDefaultFailed"))
     }
   }
@@ -223,14 +222,14 @@ export default function ProfileScreen() {
     }
   }
 
-  const handleCurrencySelect = async (selected: {code: string}) => {
+  const handleCurrencySelect = async (selected: { code: string }) => {
     setCurrencyPickerOpen(false)
     if (!user) return
     try {
-      const { error} = await supabase
-      .from("user")
-      .update({ currency: selected.code})
-      .eq("clerk_id", user.id)
+      const { error } = await supabase
+        .from("user")
+        .update({ currency: selected.code })
+        .eq("clerk_id", user.id)
       if (error) throw error
       setCurrency(selected.code)
     } catch {
@@ -238,9 +237,9 @@ export default function ProfileScreen() {
     }
   }
 
-    return (
-      <SafeAreaView className='flex-1 bg-page' edges={["top"]}>
-          <ScrollView
+  return (
+    <SafeAreaView className='flex-1 bg-page' edges={["top"]}>
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
@@ -249,33 +248,33 @@ export default function ProfileScreen() {
         </View>
 
         {/* user card */}
-      <View className='mx-5 mt-2 bg-hero rounded-2xl px-5 py-6 items-center'>
-        <TouchableOpacity
-        onPress={handlePickAvatar}
-        disabled={uploadingAvatar}
-        activeOpacity={0.8}
-        className="w-20 h-20 rounded-full bg-[#1A1D26] items-center justify-center overflow-hidden border-2 border-[#2A2E3A]"
-        >
-          {uploadingAvatar ? (
-            <ActivityIndicator color="#8A8D96" />
-          ) : user?.imageUrl && user.hasImage ? (
-            <Image
+        <View className='mx-5 mt-2 bg-hero rounded-2xl px-5 py-6 items-center'>
+          <TouchableOpacity
+            onPress={handlePickAvatar}
+            disabled={uploadingAvatar}
+            activeOpacity={0.8}
+            className="w-20 h-20 rounded-full bg-[#1A1D26] items-center justify-center overflow-hidden border-2 border-[#2A2E3A]"
+          >
+            {uploadingAvatar ? (
+              <ActivityIndicator color="#8A8D96" />
+            ) : user?.imageUrl && user.hasImage ? (
+              <Image
                 source={{ uri: user.imageUrl }}
                 style={{ width: 80, height: 80 }}
                 contentFit="cover"
-            />
-          ): (
+              />
+            ) : (
               <Feather name="user" size={30} color="#8A8D96" />
-          )}
+            )}
             <View className="absolute bottom-0 inset-x-0 h-6 bg-black/50 items-center justify-center">
               <Feather name="camera" size={13} color="#F2EFE9" />
-          </View>
-        </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
 
 
           <Text className="text-white text-2xl font-bold mt-3.5">
             {user?.firstName} {user?.lastName}
-        </Text>
+          </Text>
           <View className="flex-row items-center gap-1.5 mt-1">
             <Feather name="mail" size={11} color="#8A8D96" />
             <Text
@@ -283,51 +282,51 @@ export default function ProfileScreen() {
               numberOfLines={1}
             >
               {user?.emailAddresses?.[0]?.emailAddress}
-          </Text>
+            </Text>
+          </View>
         </View>
-      </View>
 
 
-      {/* Accounts */}
-      <SectionLabel>{t("profile.accounts")}</SectionLabel>
-      <View className="mx-5 rounded-2xl overflow-hidden border border-line">
+        {/* Accounts */}
+        <SectionLabel>{t("profile.accounts")}</SectionLabel>
+        <View className="mx-5 rounded-2xl overflow-hidden border border-line">
           {loadingAccounts ? (
             <View className="bg-card px-4 py-5 items-center">
               <ActivityIndicator color={colors.icon} />
-              </View>
-          ): accountsError ? (
+            </View>
+          ) : accountsError ? (
             <View className="bg-card px-4 py-5 items-center">
               <Text className="text-subtle text-xs">
                 {t("profile.loadAccountsFailed")}
               </Text>
-              </View>
-          ): (
+            </View>
+          ) : (
             accounts.map((accounts) => (
               <Row
-              key={accounts.id}
-              icon={ACCOUNT_ICON[accounts.type]}
-              label={accounts.name + (accounts.is_default ? " " + t("profile.defaultSuffix") : "")}
-              value={formatPrice(accounts.balance, currency)}
-              onPress={() => {
-                setEditingAccount(accounts)
-                setModalVisible(true)
-              }}
+                key={accounts.id}
+                icon={ACCOUNT_ICON[accounts.type]}
+                label={accounts.name + (accounts.is_default ? " " + t("profile.defaultSuffix") : "")}
+                value={formatPrice(accounts.balance, currency)}
+                onPress={() => {
+                  setEditingAccount(accounts)
+                  setModalVisible(true)
+                }}
               />
             ))
           )}
           <Row
-          icon='plus'
-          label={t("profile.addAccount")}
-          onPress={() => {
-            setEditingAccount(null)
-            setModalVisible(true)
-          }}
+            icon='plus'
+            label={t("profile.addAccount")}
+            onPress={() => {
+              setEditingAccount(null)
+              setModalVisible(true)
+            }}
           />
-      </View>
+        </View>
 
-      {/* Preferences */}
-      <SectionLabel>{t("profile.preferences")}</SectionLabel>
-      <View className="mx-5 rounded-2xl overflow-hidden border border-line">
+        {/* Preferences */}
+        <SectionLabel>{t("profile.preferences")}</SectionLabel>
+        <View className="mx-5 rounded-2xl overflow-hidden border border-line">
           <Row
             icon="moon"
             label={t("profile.appearance")}
@@ -355,9 +354,15 @@ export default function ProfileScreen() {
             label={t("profile.manageCategories")}
             onPress={() => router.push("/(root)/categories")}
           />
+          <Row
+            icon="target"
+            label={t("profile.goals")}
+            onPress={() => router.push("/(root)/goals")}
+          />
 
 
-           <View className="flex-row items-center bg-card px-4 py-3.5">
+
+          <View className="flex-row items-center bg-card px-4 py-3.5">
             <View className="w-8 h-8 rounded-full bg-page items-center justify-center mr-3">
               <Feather name="lock" size={15} color={colors.icon} />
             </View>
@@ -367,52 +372,52 @@ export default function ProfileScreen() {
               onValueChange={handleToggleBiometric}
             />
           </View>
-      </View>
+        </View>
 
-      {/* Account action */}
-      <SectionLabel>{t("profile.accounts")}</SectionLabel>
-      <View className="mx-5 rounded-2xl overflow-hidden border border-line">
-        <Row
+        {/* Account action */}
+        <SectionLabel>{t("profile.accounts")}</SectionLabel>
+        <View className="mx-5 rounded-2xl overflow-hidden border border-line">
+          <Row
             icon="log-out"
             label={t("profile.signOut")}
             onPress={handleSignOut}
             showChevron={false}
             danger
+          />
+        </View>
+      </ScrollView>
+
+      {user && (
+        <AccountModal
+          visible={modalVisible}
+          accounts={editingAccount}
+          onClose={closeModal}
+          onSaved={closeModal}
+          onDeleted={closeModal}
+          onMadeDefault={handleMadeDefault}
         />
-      </View>
-        </ScrollView>
+      )}
 
-          {user && (
-            <AccountModal
-            visible={modalVisible}
-            accounts={editingAccount}
-            onClose={closeModal}
-            onSaved={closeModal}
-            onDeleted={closeModal}
-            onMadeDefault={handleMadeDefault}
-            />
-          )}
+      <ThemePicker
+        visible={themePickerOpen}
+        selected={themeMode}
+        onSelect={handleThemeSelect}
+        onClose={() => setThemePickerOpen(false)}
+      />
 
-          <ThemePicker
-          visible={themePickerOpen}
-          selected={themeMode}
-          onSelect={handleThemeSelect}
-          onClose={() => setThemePickerOpen(false)}
-          />
+      <LanguagePicker
+        visible={languagePickerOpen}
+        selected={languagePreference}
+        onSelect={handleLanguageSelect}
+        onClose={() => setLanguagePickerOpen(false)}
+      />
 
-          <LanguagePicker
-          visible={languagePickerOpen}
-          selected={languagePreference}
-          onSelect={handleLanguageSelect}
-          onClose={() => setLanguagePickerOpen(false)}
-          />
-
-          <CurrencyPicker
-          visible={currencyPickerOpen}
-          selectedCode={currency}
-          onSelect={handleCurrencySelect}
-          onClose={() => setCurrencyPickerOpen(false)}
-          />
-      </SafeAreaView>
-    )
+      <CurrencyPicker
+        visible={currencyPickerOpen}
+        selectedCode={currency}
+        onSelect={handleCurrencySelect}
+        onClose={() => setCurrencyPickerOpen(false)}
+      />
+    </SafeAreaView>
+  )
 }
