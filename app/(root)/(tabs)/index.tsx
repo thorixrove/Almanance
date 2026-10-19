@@ -27,6 +27,7 @@ import {
 import { PieChart } from "react-native-gifted-charts"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useCategories } from "@/hooks/useCategories"
+import { HomeGoalsCard } from "@/components/HomeGoalsCard";
 
 
 
@@ -231,9 +232,9 @@ export default function HomeScreen() {
                   action.action === "transfer"
                     ? setTransferOpen(true)
                     : router.push({
-                        pathname: "/(root)/(tabs)/add-transaction",
-                        params: { action: action.action },
-                      })
+                      pathname: "/(root)/(tabs)/add-transaction",
+                      params: { action: action.action },
+                    })
                 }
                 activeOpacity={0.75}
                 className="flex-1 bg-brand-surface rounded-2xl border border-brand-surface-border py-4 items-center gap-2"
@@ -312,30 +313,31 @@ export default function HomeScreen() {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => router.push("/(root)/report")}
-            activeOpacity={0.85}
-            className="bg-card rounded-[18px] border border-line p-4 mb-[18px] flex-row items-center gap-3"
-          >
-            <View className="w-9 h-9 rounded-full bg-[#4A9EFF1A] items-center justify-center">
-              <Feather name="bar-chart-2" size={16} color="#4A9EFF" />
-            </View>
-            <View className="flex-1">
-              <Text className="text-ink text-sm font-medium">
-                {t("home.monthlyReport")}
-              </Text>
-              <Text className="text-brand-text-secondary text-xs mt-0.5">
-                {t("home.reportSubtitle")}
-              </Text>
-            </View>
-            <Feather name="chevron-right" size={16} color="#8A8D96" />
-          </TouchableOpacity>
+
+
 
           {expenseBreakedown.length > 0 && (
             <View className="bg-card rounded-[18px] border border-line p-4 mb-[18px]">
-              <Text className="text-ink text-sm font-medium mb-3">
-                {t("home.expenseBreakdown")}
-              </Text>
+
+              <View className="flex-row items-center justify-between mb-3">
+                <Text
+                  className="flex-1 text-ink text-sm font-medium mr-2"
+                  numberOfLines={1}
+                >
+                  {t("home.expenseBreakdown")}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => router.push("/(root)/report")}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("home.monthlyReport")}
+                  activeOpacity={0.7}
+                  hitSlop={8}
+                  className="flex-row items-center gap-1.5 bg-[#4A9EFF1A] border border-[#4A9EFF55] rounded-full px-4 py-1.5"
+                >
+                  <Feather name="bar-chart-2" size={17} color="#4A9EFF" />
+                </TouchableOpacity>
+              </View>
+
               <View className="flex-row items-center">
                 <PieChart
                   data={expenseBreakedown.map((c) => ({
@@ -367,6 +369,8 @@ export default function HomeScreen() {
               </View>
             </View>
           )}
+
+          <HomeGoalsCard />
 
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-ink text-sm font-medium">
