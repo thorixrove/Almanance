@@ -354,11 +354,7 @@ export default function ProfileScreen() {
             label={t("profile.manageCategories")}
             onPress={() => router.push("/(root)/categories")}
           />
-          <Row
-            icon="target"
-            label={t("profile.goals")}
-            onPress={() => router.push("/(root)/goals")}
-          />
+          
 
 
 

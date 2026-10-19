@@ -265,6 +265,9 @@ const id: Translation = {
 
   goal: {
     title: "Target tabungan",
+    viewAll: "Lihat semua",
+    homeEmpty: "Buat target tabungan pertama",
+    moreGoals: "+{{count}} target lain",
     active: "Berjalan",
     completed: "Tercapai",
     empty: "Belum ada target tabungan. Ketuk + untuk membuat.",
@@ -348,7 +351,6 @@ const id: Translation = {
     budgetSpent: "{{spent}} dari {{total}} terpakai",
     setBudgetHint: "Ketuk untuk mengatur anggaran pengeluaran bulanan",
     monthlyReport: "Laporan bulanan",
-    reportSubtitle: "Bandingkan pengeluaran dengan bulan lalu",
     expenseBreakdown: "Rincian pengeluaran (bulan ini)",
     recentTransactions: "Transaksi terbaru",
     seeAll: "Lihat semua",

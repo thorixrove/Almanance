@@ -260,6 +260,9 @@ const en = {
   },
   goal: {
     title: "Savings goals",
+    viewAll: "View all",
+    homeEmpty: "Create your first savings goal",
+    moreGoals: "+{{count}} more",
     active: "In progress",
     completed: "Completed",
     empty: "No savings goals yet. Tap + to create one.",
@@ -343,7 +346,6 @@ const en = {
     budgetSpent: "{{spent}} of {{total}} spent",
     setBudgetHint: "Tap to set a monthly spending budget",
     monthlyReport: "Monthly report",
-    reportSubtitle: "Compare spending with last month",
     expenseBreakdown: "Expense breakdown (this month)",
     recentTransactions: "Recent transactions",
     seeAll: "See all",
