@@ -354,12 +354,6 @@ export default function ProfileScreen() {
             label={t("profile.manageCategories")}
             onPress={() => router.push("/(root)/categories")}
           />
-          <Row
-            icon="pie-chart"
-            label={t("categoryBudget.title")}
-            onPress={() => router.push("/(root)/category-budgets")}
-          />
-
 
 
           <View className="flex-row items-center bg-card px-4 py-3.5">

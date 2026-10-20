@@ -137,8 +137,14 @@ export function CategoryBudgetSheet({
             ) : null}
 
 
-            <TouchableOpacity>
-                <Text>
+            <TouchableOpacity
+            onPress={handleSave}
+            disabled={saving || loading || loadFailed || allUsed}
+            className="bg-solid rounded-xl py-4 items-center"
+            style={{ opacity: saving || loading || loadFailed || allUsed ? 0.5 : 1}}
+            activeOpacity={0.85}
+            >
+                <Text className="text-on-solid texxt-sm font-semibold">
                     {saving ? t("common.saving") : isEditing ? t("categoryBudget.saveChanges") : t("categoryBudget.add")}
                 </Text>
             </TouchableOpacity>
