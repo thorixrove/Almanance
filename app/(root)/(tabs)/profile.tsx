@@ -354,8 +354,6 @@ export default function ProfileScreen() {
             label={t("profile.manageCategories")}
             onPress={() => router.push("/(root)/categories")}
           />
-          
-
 
 
           <View className="flex-row items-center bg-card px-4 py-3.5">

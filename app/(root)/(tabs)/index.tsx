@@ -28,6 +28,7 @@ import { PieChart } from "react-native-gifted-charts"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useCategories } from "@/hooks/useCategories"
 import { HomeGoalsCard } from "@/components/HomeGoalsCard";
+import { HomeCategoryBudgetsCard } from "@/components/HomeCategoryBudgetsCard";
 
 
 
@@ -371,6 +372,7 @@ export default function HomeScreen() {
           )}
 
           <HomeGoalsCard />
+          <HomeCategoryBudgetsCard />
 
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-ink text-sm font-medium">
