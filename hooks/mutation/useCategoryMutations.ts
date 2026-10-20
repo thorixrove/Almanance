@@ -53,6 +53,7 @@ export function useDeleteCategory() {
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ["categories"] }),
                 queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+                queryClient.invalidateQueries({ queryKey: ["categoryBudgets"]})
             ])
         },
     })
