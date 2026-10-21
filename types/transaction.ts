@@ -5,7 +5,8 @@ export type TransactionType = "INCOME" | "EXPENSE";
 export type TransferType = "TRANSFER_IN" | "TRANSFER_OUT";
 
 export type StoredTransactionType = TransactionType | TransferType;
-export type InputMethod = "MANUAL" | "RECEIPT_SCAN" | "VOICE";
+
+export type InputMethod = "MANUAL" | "RECEIPT_SCAN" | "VOICE" | "RECURRING";
 
 export type Transaction = {
   id: string;
@@ -21,6 +22,8 @@ export type Transaction = {
   voice_transcript: string | null;
   is_flagged: boolean;
   flag_reason: string | null;
+  recurring_rule_id: string | null;
+  occurrence_date: string | null;
   created_at: string;
   updated_at: string;
 };
