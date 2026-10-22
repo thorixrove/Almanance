@@ -354,6 +354,11 @@ export default function ProfileScreen() {
             label={t("profile.manageCategories")}
             onPress={() => router.push("/(root)/categories")}
           />
+          <Row
+            icon="repeat"
+            label={t("profile.recurring")}
+            onPress={() => router.push("/(root)/recurring")}
+          />
 
 
           <View className="flex-row items-center bg-card px-4 py-3.5">

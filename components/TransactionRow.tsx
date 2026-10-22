@@ -18,90 +18,91 @@ import { useUserStore } from "@/store/useStore";
 
 
 const INPUT_METHOD_ICON: Record<
-Transaction["input_method"],
-keyof typeof Feather.glyphMap
+  Transaction["input_method"],
+  keyof typeof Feather.glyphMap
 > = {
-    MANUAL: "edit-3",
-    RECEIPT_SCAN: "camera",
-    VOICE: "mic",
+  MANUAL: "edit-3",
+  RECEIPT_SCAN: "camera",
+  VOICE: "mic",
+  RECURRING: "repeat",
 }
 
 // Tombol aksi yang muncul saat baris digeser. Muncul bertahap (fade + membesar)
 // mengikuti progress geseran, jadi terasa halus, bukan tiba-tiba terlihat.
 function SwipeActions({
-    progress,
-    onEdit,
-    onDelete,
+  progress,
+  onEdit,
+  onDelete,
 }: {
-    progress: SharedValue<number>
-    onEdit?: () => void
-    onDelete: () => void
+  progress: SharedValue<number>
+  onEdit?: () => void
+  onDelete: () => void
 }) {
-    const style = useAnimatedStyle(() => ({
-        opacity: interpolate(progress.value, [0, 0.4, 1], [0, 0.7, 1], Extrapolation.CLAMP),
-        transform: [
-            { scale: interpolate(progress.value, [0, 1], [0.85, 1], Extrapolation.CLAMP) },
-        ],
-    }))
+  const style = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0, 0.4, 1], [0, 0.7, 1], Extrapolation.CLAMP),
+    transform: [
+      { scale: interpolate(progress.value, [0, 1], [0.85, 1], Extrapolation.CLAMP) },
+    ],
+  }))
 
-    return (
-        <Animated.View style={[{ flexDirection: "row" }, style]}>
-            {onEdit && (
-                <TouchableOpacity
-                    onPress={onEdit}
-                    className="bg-brand-blue rounded-2xl ml-2 w-16 items-center justify-center"
-                >
-                    <Feather name="edit-2" size={18} color="#fff" />
-                </TouchableOpacity>
-            )}
-            <TouchableOpacity
-                onPress={onDelete}
-                className="bg-brand-coral rounded-2xl ml-2 w-16 items-center justify-center"
-            >
-                <Feather name="trash-2" size={18} color="#fff" />
-            </TouchableOpacity>
-        </Animated.View>
-    )
+  return (
+    <Animated.View style={[{ flexDirection: "row" }, style]}>
+      {onEdit && (
+        <TouchableOpacity
+          onPress={onEdit}
+          className="bg-brand-blue rounded-2xl ml-2 w-16 items-center justify-center"
+        >
+          <Feather name="edit-2" size={18} color="#fff" />
+        </TouchableOpacity>
+      )}
+      <TouchableOpacity
+        onPress={onDelete}
+        className="bg-brand-coral rounded-2xl ml-2 w-16 items-center justify-center"
+      >
+        <Feather name="trash-2" size={18} color="#fff" />
+      </TouchableOpacity>
+    </Animated.View>
+  )
 }
 
 function TransactionRowComponent({
-    tx,
-    onDelete,
-    onLongPress,
-    selectionMode = false,
-    selected = false,
-    onToggleSelect,
-    onEdit,
+  tx,
+  onDelete,
+  onLongPress,
+  selectionMode = false,
+  selected = false,
+  onToggleSelect,
+  onEdit,
 }: {
-    tx: ListTransaction;
-    // Dipanggil dari tombol Edit yang muncul saat baris digeser ke kiri.
-    onEdit?: (tx: Transaction) => void
-    // now receives the transaction, so the parent can pass a single
-    // stable function reference instead of creating a new closure
-    // per row on every render.
-    onDelete?: (tx: Transaction) => void
-    // Long-pressing a row enters selection mode and selects it.
-    onLongPress?: (tx: Transaction) => void
-    // When true, tapping the row toggles selection instead of the normal
-    // swipe-to-delete behavior.
-    selectionMode?: boolean
-    selected?: boolean
-    onToggleSelect?: (tx: Transaction) => void
+  tx: ListTransaction;
+  // Dipanggil dari tombol Edit yang muncul saat baris digeser ke kiri.
+  onEdit?: (tx: Transaction) => void
+  // now receives the transaction, so the parent can pass a single
+  // stable function reference instead of creating a new closure
+  // per row on every render.
+  onDelete?: (tx: Transaction) => void
+  // Long-pressing a row enters selection mode and selects it.
+  onLongPress?: (tx: Transaction) => void
+  // When true, tapping the row toggles selection instead of the normal
+  // swipe-to-delete behavior.
+  selectionMode?: boolean
+  selected?: boolean
+  onToggleSelect?: (tx: Transaction) => void
 }) {
-    const { t } = useTranslation()
-    const colors = useThemeColors()
-    const { getCategory } = useCategories()
-    const config = getCategory(
-      tx.category,
-      tx.type === "INCOME" || tx.type === "TRANSFER_IN" ? "INCOME" : "EXPENSE"
-    )
-    const categoryLabel = config.label
-    const transfer = isTransfer(tx)
-    // Transfer: TRANSFER_IN bertanda +, TRANSFER_OUT bertanda -, warna netral.
-    const isIncome = tx.type === "INCOME" || tx.type === "TRANSFER_IN"
-    const currency = useUserStore((state) => state.currency)
+  const { t } = useTranslation()
+  const colors = useThemeColors()
+  const { getCategory } = useCategories()
+  const config = getCategory(
+    tx.category,
+    tx.type === "INCOME" || tx.type === "TRANSFER_IN" ? "INCOME" : "EXPENSE"
+  )
+  const categoryLabel = config.label
+  const transfer = isTransfer(tx)
+  // Transfer: TRANSFER_IN bertanda +, TRANSFER_OUT bertanda -, warna netral.
+  const isIncome = tx.type === "INCOME" || tx.type === "TRANSFER_IN"
+  const currency = useUserStore((state) => state.currency)
 
-    const row = (
+  const row = (
     <View
       className="flex-row items-center bg-card rounded-2xl border border-line pl-3 pr-3.5 py-4"
       style={{
@@ -161,13 +162,12 @@ function TransactionRowComponent({
       </View>
 
       <Text
-        className={`text-sm font-medium ${
-          transfer
+        className={`text-sm font-medium ${transfer
             ? "text-[#7F8C8D]"
             : isIncome
-            ? "text-brand-success"
-            : "text-brand-coral"
-        }`}
+              ? "text-brand-success"
+              : "text-brand-coral"
+          }`}
       >
         {tx.transfer ? "" : isIncome ? "+" : "-"}
         {formatPrice(tx.amount, currency)}
@@ -183,37 +183,37 @@ function TransactionRowComponent({
         />
       )}
     </View>
-    )
+  )
 
-    // Selection mode: whole row is tappable to toggle, long-press and
-    // swipe are disabled so selection doesn't fight with those gestures.
-    if (selectionMode) {
-        return (
-            <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => onToggleSelect?.(tx)}
-                className="mb-2.5"
-            >
-                {row}
-            </TouchableOpacity>
-        )
-    }
-
-    if (!onDelete) {
-        return (
-            <TouchableOpacity
-                activeOpacity={onLongPress ? 0.7 : 1}
-                onLongPress={() => onLongPress?.(tx)}
-                delayLongPress={350}
-                className="mb-2.5"
-            >
-                {row}
-            </TouchableOpacity>
-        )
-    }
-
+  // Selection mode: whole row is tappable to toggle, long-press and
+  // swipe are disabled so selection doesn't fight with those gestures.
+  if (selectionMode) {
     return (
-      <View className="mb-2.5">
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => onToggleSelect?.(tx)}
+        className="mb-2.5"
+      >
+        {row}
+      </TouchableOpacity>
+    )
+  }
+
+  if (!onDelete) {
+    return (
+      <TouchableOpacity
+        activeOpacity={onLongPress ? 0.7 : 1}
+        onLongPress={() => onLongPress?.(tx)}
+        delayLongPress={350}
+        className="mb-2.5"
+      >
+        {row}
+      </TouchableOpacity>
+    )
+  }
+
+  return (
+    <View className="mb-2.5">
       <Swipeable
         overshootRight={false}
         rightThreshold={36}
@@ -224,9 +224,9 @@ function TransactionRowComponent({
             onEdit={
               onEdit && !transfer
                 ? () => {
-                    swipeable.close()
-                    onEdit(tx)
-                  }
+                  swipeable.close()
+                  onEdit(tx)
+                }
                 : undefined
             }
             onDelete={() => {
@@ -237,19 +237,15 @@ function TransactionRowComponent({
         )}
       >
         <TouchableOpacity
-            activeOpacity={onLongPress ? 0.7 : 1}
-            onLongPress={() => onLongPress?.(tx)}
-            delayLongPress={350}
+          activeOpacity={onLongPress ? 0.7 : 1}
+          onLongPress={() => onLongPress?.(tx)}
+          delayLongPress={350}
         >
-            {row}
+          {row}
         </TouchableOpacity>
       </Swipeable>
     </View>
-    )
+  )
 }
 
-// React.memo: skip re-rendering this row if props didn't actually change
-// reference. Combined with stable callbacks from the parent (see
-// transactions.tsx), unrelated re-renders of the screen (search typing,
-// filter toggles, etc.) no longer re-render every row.
 export const TransactionRow = memo(TransactionRowComponent)

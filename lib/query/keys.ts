@@ -7,5 +7,6 @@ export const queryKeys = {
     budgets: (userId?: string) => ["budgets", userId] as const,
     categories: (userId?: string) => ["categories", userId] as const,
     goals: (userId?: string) => ["goals", userId] as const,
-    categoryBudgets: (userId?: string) => ["categoryBudgets", userId] as const
+    categoryBudgets: (userId?: string) => ["categoryBudgets", userId] as const,
+    recurring: (userId?: string) => ["recurring", userId] as const
 }
