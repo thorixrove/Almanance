@@ -190,6 +190,12 @@ const id: Translation = {
     passwordMin: "Kata sandi minimal 8 karakter",
     passwordRequired: "Kata sandi wajib diisi.",
     codeRequired: "Masukkan kode verifikasi.",
+    sendCode: "Kirim kode",
+    resendIn: "Kirim ulang kode dalam {{seconds}} dtk",
+    codeResent: "Kode baru telah dikirim.",
+    accountNotFound: "Tidak ada akun dengan email ini.",
+    signInVerifySubtitle: "Kami mengirim kode masuk ke {{email}}",
+    toManyRequests: "Terlalu banyak permintaan. Coba lagi sebentar lagi.",
   },
   onboarding: {
     title: "Mari siapkan akun Anda",

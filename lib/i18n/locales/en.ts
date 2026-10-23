@@ -186,6 +186,12 @@ const en = {
     passwordMin: "Password must be at least 8 characters",
     passwordRequired: "Password is required.",
     codeRequired: "Enter the verification code.",
+    sendCode: "Send code",
+    resendIn: "Resend code in {{seconds}}s",
+    codeResent: "A new code has been sent.",
+    accountNotFound: "No account found with this email.",
+    signInVerifySubtitle: "We sent a sign-in code to {{email}}",
+    toManyRequests: "Too many requests. Please try again in a moment.",
   },
   onboarding: {
     title: "Let's get you set up",

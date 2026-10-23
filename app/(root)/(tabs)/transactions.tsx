@@ -1,6 +1,14 @@
 import { DateRangeSheet } from "@/components/DateRangeSheet"
 import { EditTransactionModal } from "@/components/EditTransactionModal"
 import { TransactionRow } from "@/components/TransactionRow"
+import { AccountFilterChips } from "@/components/transactions/AccountFilterChips"
+import { DateRangeFilterButton } from "@/components/transactions/DateRangeFilterButton"
+import { TransactionChart } from "@/components/transactions/TransactionChart"
+import { TransactionSearchBar } from "@/components/transactions/TransactionSearchBar"
+import { FILTERS, TransactionTypeFilter } from "@/components/transactions/TransactionTypeFilter"
+import { TransactionsEmptyState } from "@/components/transactions/TransactionsEmptyState"
+import { TransactionsErrorState } from "@/components/transactions/TransactionsErrorState"
+import { TransactionsHeader } from "@/components/transactions/TransactionsHeader"
 import { useDeleteTransactions, useDeleteTransactionsBulk } from "@/hooks/mutation/useTransactionMutations"
 import { useAccountsQuery } from "@/hooks/queries/useAccountsQuery"
 import { useTransactionsQuery } from "@/hooks/queries/useTransactionsQuery"
@@ -8,25 +16,14 @@ import { Transaction, TransactionType } from "@/lib/services/transactions"
 import {
   ALL_TIME,
   DateRange,
-  formatRangeLabel,
   toFilterDates,
 } from "@/lib/utils/dateRange"
 import { exportTransactionsToCsv } from "@/lib/utils/exportTransactions"
+import { buildChartBuckets } from "@/lib/utils/transactionChart"
 import { ListTransaction, mergeTransferLegs } from "@/lib/utils/transfer"
-import { Feather } from "@expo/vector-icons"
-import {
-  differenceInCalendarDays,
-  eachDayOfInterval,
-  eachMonthOfInterval,
-  format,
-  startOfDay,
-  startOfMonth,
-} from "date-fns"
 import { useRouter } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { useCategories } from "@/hooks/useCategories"
-import { formatDate } from "@/lib/i18n/dateLocale"
-import { useThemeColors } from "@/components/ThemeProvider"
 import { useCallback, useMemo, useState } from "react"
 import {
   ActivityIndicator,
@@ -34,80 +31,18 @@ import {
   FlatList,
   ListRenderItem,
   RefreshControl,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
   View,
 } from "react-native"
-import { BarChart } from "react-native-gifted-charts"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-
-const FILTERS = ["ALL", "Income", "Expense"] as const
-
-const FILTER_LABEL_KEYS = {
-  ALL: "transactions.filterAll",
-  Income: "transactions.filterIncome",
-  Expense: "transactions.filterExpense",
-} as const
-
-// Transaksi saldo awal dari onboarding bukan pemasukan sungguhan,
-// jadi tidak ikut dihitung di grafik harian.
 const STARTING_BALANCE_DESCRIPTION = "Starting balance"
-
-// Lebih dari ini -> grafik dikelompokkan per bulan supaya tetap terbaca.
-const MAX_DAILY_BARS = 62
-
-function dayKey(date: Date) {
-  return format(date, "yyyy-MM-dd")
-}
-
-function monthKey(date: Date) {
-  return format(date, "yyyy-MM")
-}
-
-// Tentukan bucket grafik dari rentang tanggal. Tanpa rentang (All time),
-// grafik tetap menampilkan bulan berjalan seperti sebelumnya.
-function buildChartBuckets(range: DateRange) {
-  const today = startOfDay(new Date())
-  const from =
-    range.from && range.to ? startOfDay(range.from) : startOfMonth(today)
-  const rawTo = range.from && range.to ? startOfDay(range.to) : today
-  const to = rawTo > today ? today : rawTo
-
-  if (from > to) {
-    return { monthly: false, keyOf: dayKey, buckets: [] as { key: string; label: string }[] }
-  }
-
-  if (differenceInCalendarDays(to, from) + 1 > MAX_DAILY_BARS) {
-    return {
-      monthly: true,
-      keyOf: monthKey,
-      buckets: eachMonthOfInterval({ start: from, end: to }).map((d) => ({
-        key: monthKey(d),
-        label: formatDate(d, "MMM yy"),
-      })),
-    }
-  }
-
-  return {
-    monthly: false,
-    keyOf: dayKey,
-    buckets: eachDayOfInterval({ start: from, end: to }).map((d) => ({
-      key: dayKey(d),
-      label: formatDate(d, "d MMM"),
-    })),
-  }
-}
 
 export default function TransactionsScreen() {
   const router = useRouter()
   const { t, i18n } = useTranslation()
-  const colors = useThemeColors()
 
-  const [activeFilters, setActiveFilters] = 
-  useState <(typeof FILTERS)[number]>("ALL")
+  const [activeFilters, setActiveFilters] =
+    useState<(typeof FILTERS)[number]>("ALL")
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [exporting, setExporting] = useState(false)
@@ -115,23 +50,20 @@ export default function TransactionsScreen() {
   const [rangeSheetOpen, setRangeSheetOpen] = useState(false)
   const rangeActive = dateRange.preset !== "ALL"
 
-  // Multi-select state: entered via long-press on a row or the header
-  // "Select" button. While active, tapping rows toggles selection instead
-  // of the normal swipe-to-delete / navigate behavior.
+
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
-  // Snapshot transaksi yang sedang diedit. Disimpan sebagai state (bukan dicari
-  // ulang dari list) supaya refetch tidak me-reset isian form saat user mengetik.
+
   const [editingTx, setEditingTx] = useState<Transaction | null>(null)
 
 
   const typeFilter: TransactionType | null =
-  activeFilters === "Income"
-  ? "INCOME"
-  : activeFilters === "Expense"
-  ? "EXPENSE"
-  : null
+    activeFilters === "Income"
+      ? "INCOME"
+      : activeFilters === "Expense"
+        ? "EXPENSE"
+        : null
 
   const {
     data: transactions = [],
@@ -142,10 +74,10 @@ export default function TransactionsScreen() {
   } = useTransactionsQuery({
     type: typeFilter,
     accountId: activeAccountId,
-    ...toFilterDates(dateRange),
+    ...toFilterDates(dateRange)
   })
-  const { data: accounts = [], refetch: refetchAccounts} = useAccountsQuery()
-  const { mutateAsync: removeTransactions} = useDeleteTransactions()
+  const { data: accounts = [], refetch: refetchAccounts } = useAccountsQuery()
+  const { mutateAsync: removeTransactions } = useDeleteTransactions()
   const { mutateAsync: removeTransactionsBulk, isPending: bulkDeleting } = useDeleteTransactionsBulk()
 
   const loading = transactionsLoading
@@ -157,7 +89,6 @@ export default function TransactionsScreen() {
     refetchAccounts()
   }
 
-  // Dua sisi satu transfer digabung jadi satu baris untuk daftar.
   const listItems = useMemo(
     () => mergeTransferLegs(transactions, accounts),
     [transactions, accounts]
@@ -174,8 +105,7 @@ export default function TransactionsScreen() {
         tx.type === "INCOME" || tx.type === "TRANSFER_IN" ? "INCOME" : "EXPENSE"
       )
       return (
-        tx.description?.toLowerCase().includes(q) ||
-        // key mentah hanya untuk kategori bawaan (key custom "c_xxx" hanya noise)
+        tx.description?.toLocaleLowerCase().includes(q) ||
         (!category.isCustom && tx.category.toLowerCase().includes(q)) ||
         category.label.toLowerCase().includes(q) ||
         tx.transfer?.fromName.toLowerCase().includes(q) ||
@@ -191,7 +121,7 @@ export default function TransactionsScreen() {
     const expense = new Map<string, number>()
 
     for (const tx of transactions) {
-      const key = chart.keyOf(new Date(tx.date))
+      const key = chart.keyof(new Date(tx.date))
       if (tx.type === "INCOME") {
         if (tx.description === STARTING_BALANCE_DESCRIPTION) continue
         income.set(key, (income.get(key) ?? 0) + tx.amount)
@@ -208,7 +138,6 @@ export default function TransactionsScreen() {
 
   const handleApplyRange = (range: DateRange) => {
     setDateRange(range)
-    // Pilihan lama bisa berisi transaksi yang sudah tidak tampil.
     setSelectedIds(new Set())
   }
 
@@ -216,7 +145,7 @@ export default function TransactionsScreen() {
     if (exporting) return
     setExporting(true)
     try {
-      const {count} = await exportTransactionsToCsv(transactions, {
+      const { count } = await exportTransactionsToCsv(transactions, {
         applyWindow: !rangeActive,
       })
       if (count === 0) {
@@ -235,9 +164,7 @@ export default function TransactionsScreen() {
     }
   }
 
-  // Stable reference (only changes if removeTransactions itself changes),
-  // so TransactionRow's React.memo can actually skip re-renders.
-  // Takes the tx as an argument instead of being wrapped per-item.
+
   const handelDelete = useCallback(
     (tx: Transaction) => {
       const transferId = (tx as Transaction & { transfer_id?: string | null }).transfer_id
@@ -256,16 +183,15 @@ export default function TransactionsScreen() {
               if (deleteError) {
                 Alert.alert(t("common.error"), t("transactions.deleteFailed"))
               }
-            },
-          },
+            }
+          }
         ]
       )
     },
     [removeTransactions, t]
   )
 
-  // Ketuk baris -> buka form edit. Saldo awal dikunci karena dikenali lewat
-  // deskripsinya; kalau deskripsi diubah, ia akan dihitung sebagai pemasukan biasa.
+
   const handleEdit = useCallback((tx: Transaction) => {
     if (tx.description === STARTING_BALANCE_DESCRIPTION) {
       Alert.alert(
@@ -277,8 +203,6 @@ export default function TransactionsScreen() {
     setEditingTx(tx)
   }, [t])
 
-  // Long-pressing any row (when not already selecting) enters selection
-  // mode and selects that row.
   const handleLongPress = useCallback((tx: Transaction) => {
     setSelectionMode(true)
     setSelectedIds(new Set([tx.id]))
@@ -312,8 +236,9 @@ export default function TransactionsScreen() {
       t("transactions.deleteSelectedTitle"),
       (selected.length > 1
         ? t("transactions.deleteSelectedMany", { count: selected.length })
-        : t("transactions.deleteSelectedOne", { count: selected.length })) +
-        (hasTransfer ? t("transactions.deleteSelectedTransferNote") : ""),
+        : t("transactions.deleteSelectedOne", { count: selected.length })
+      ) +
+      (hasTransfer ? t("transactions.deleteSelectedTransferNote") : ""),
       [
         { text: t("common.cancel"), style: "cancel" },
         {
@@ -332,9 +257,6 @@ export default function TransactionsScreen() {
     )
   }, [transactions, selectedIds, removeTransactionsBulk, exitSelectionMode, t])
 
-  // Stable renderItem reference so FlatList doesn't treat every parent
-  // re-render (typing in search, toggling filters, selecting rows) as a
-  // reason to re-create and re-render every visible row.
   const renderItem: ListRenderItem<ListTransaction> = useCallback(
     ({ item }) => (
       <TransactionRow
@@ -353,175 +275,33 @@ export default function TransactionsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-page" edges={["top"]}>
       <View className="px-5 pt-3 pb-2">
-        <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-ink text-xl font-semibold">
-            {selectionMode
-              ? t("transactions.selectedCount", { count: selectedIds.size })
-              : t("transactions.title")}
-          </Text>
+        <TransactionsHeader
+          selectionMode={selectionMode}
+          selectedCount={selectedIds.size}
+          bulkDeleting={bulkDeleting}
+          exporting={exporting}
+          onDeleteSelected={handleDeleteSelected}
+          onExitSelection={exitSelectionMode}
+          onEnterSelection={() => setSelectionMode(true)}
+          onExport={handleExport}
+        />
 
-          {selectionMode ? (
-            <View className="flex-row items-center gap-2">
-              <TouchableOpacity
-                onPress={handleDeleteSelected}
-                disabled={selectedIds.size === 0 || bulkDeleting}
-                className={`w-9 h-9 rounded-full items-center justify-center ${
-                  selectedIds.size === 0 ? "bg-card border border-line" : "bg-brand-coral"
-                }`}
-              >
-                {bulkDeleting ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Feather
-                    name="trash-2"
-                    size={15}
-                    color={selectedIds.size === 0 ? "#8A8D96" : "#fff"}
-                  />
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={exitSelectionMode}
-                className="w-9 h-9 rounded-full bg-card border border-line items-center justify-center"
-              >
-                <Feather name="x" size={15} color={colors.icon} />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View className="flex-row items-center gap-2">
-              <TouchableOpacity
-                onPress={() => setSelectionMode(true)}
-                className="w-9 h-9 rounded-full bg-card border border-line items-center justify-center"
-              >
-                <Feather name="check-square" size={15} color={colors.icon} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleExport}
-                disabled={exporting}
-                className="w-9 h-9 rounded-full bg-card border border-line items-center justify-center"
-              >
-                {exporting ? (
-                  <ActivityIndicator size="small" color={colors.icon} />
-                ) : (
-                  <Feather name="download" size={15} color={colors.icon} />
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
+        <TransactionSearchBar value={search} onChangeText={setSearch} />
 
-        <View className="flex-row items-center gap-2 bg-card rounded-xl border border-line px-3.5 py-2.5 mb-2.5">
-          <Feather name="search" size={15} color="#8A8D96" />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder={t("transactions.searchPlaceholder")}
-            placeholderTextColor="#8A8D96"
-            className="flex-1 text-xs text-ink"
-          />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch("")}>
-              <Feather name="x" size={15} color="#8A8D96" />
-            </TouchableOpacity>
-          )}
-        </View>
+        <TransactionTypeFilter activeFilter={activeFilters} onChange={setActiveFilters} />
 
-        <View className="flex-row gap-2 mb-2.5">
-          {FILTERS.map((filter) => (
-            <TouchableOpacity
-              key={filter}
-              onPress={() => setActiveFilters(filter)}
-              className={`px-3.5 py-1.5 rounded-full border ${
-                activeFilters === filter
-                  ? "bg-solid border-solid"
-                  : "bg-card border-line"
-              }`}
-            >
-              <Text
-                className={`text-xs ${
-                  activeFilters === filter
-                    ? "text-on-solid"
-                    : "text-brand-text-secondary"
-                }`}
-              >
-                {t(FILTER_LABEL_KEYS[filter])}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <AccountFilterChips
+          accounts={accounts}
+          activeAccountId={activeAccountId}
+          onChange={setActiveAccountId}
+        />
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View className="flex-row gap-2">
-            <TouchableOpacity
-              onPress={() => setActiveAccountId(null)}
-              className={`px-3.5 py-1.5 rounded-full border ${
-                activeAccountId === null
-                  ? "bg-solid border-solid"
-                  : "bg-card border-line"
-              }`}
-            >
-              <Text
-                className={`text-xs ${
-                  activeAccountId === null
-                    ? "text-on-solid"
-                    : "text-brand-text-secondary"
-                }`}
-              >
-                {t("transactions.allAccounts")}
-              </Text>
-            </TouchableOpacity>
-            {accounts.map((accounts) => (
-             <TouchableOpacity
-                key={accounts.id}
-                onPress={() => setActiveAccountId(accounts.id)}
-                className={`px-3.5 py-1.5 rounded-full border ${
-                  activeAccountId === accounts.id
-                    ? "bg-solid border-solid"
-                    : "bg-card border-line"
-                }`}
-              >
-                <Text
-                  className={`text-xs ${
-                    activeAccountId === accounts.id
-                      ? "text-on-solid"
-                      : "text-brand-text-secondary"
-                  }`}
-                >
-                  {accounts.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
-
-        <View className="flex-row items-center gap-2 mt-2.5">
-          <TouchableOpacity
-            onPress={() => setRangeSheetOpen(true)}
-            className={`flex-row items-center gap-1.5 px-3.5 py-1.5 rounded-full border ${
-              rangeActive ? "bg-solid border-solid" : "bg-card border-line"
-            }`}
-          >
-            <Feather
-              name="calendar"
-              size={12}
-              color={rangeActive ? colors.onSolid : colors.icon}
-            />
-            <Text
-              className={`text-xs ${
-                rangeActive ? "text-on-solid" : "text-brand-text-secondary"
-              }`}
-            >
-              {formatRangeLabel(dateRange)}
-            </Text>
-          </TouchableOpacity>
-          {rangeActive && (
-            <TouchableOpacity
-              onPress={() => handleApplyRange(ALL_TIME)}
-              className="w-7 h-7 rounded-full bg-card border border-line items-center justify-center"
-            >
-              <Feather name="x" size={13} color="#8A8D96" />
-            </TouchableOpacity>
-          )}
-        </View>
+        <DateRangeFilterButton
+          dateRange={dateRange}
+          rangeActive={rangeActive}
+          onOpen={() => setRangeSheetOpen(true)}
+          onReset={() => handleApplyRange(ALL_TIME)}
+        />
       </View>
 
       {loading ? (
@@ -529,18 +309,7 @@ export default function TransactionsScreen() {
           <ActivityIndicator color="#4A9EFF" />
         </View>
       ) : error ? (
-        <View className="flex-1 items-center justify-center px-10">
-          <Feather name="alert-circle" size={32} color="#FF6B4A" />
-          <Text className="text-subtle text-sm mt-3 text-center">
-            {t("transactions.loadError")}
-            </Text>
-          <TouchableOpacity
-            onPress={() => loadData()}
-            className="mt-4 bg-solid rounded-full px-4 py-2"
-          >
-            <Text className="text-on-solid text-xs font-medium">{t("transactions.retry")}</Text>
-            </TouchableOpacity>
-          </View>
+        <TransactionsErrorState onRetry={loadData} />
       ) : (
         <FlatList
           data={filterTransactions}
@@ -564,58 +333,14 @@ export default function TransactionsScreen() {
           removeClippedSubviews
           ListHeaderComponent={
             transactions.length > 0 && !selectionMode ? (
-              <View className="bg-card rounded-2xl border border-line p-4 mb-4">
-                <View className="flex-row justify-between items-center mb-3">
-                  <View className="flex-row gap-3">
-                    <View className="flex-row items-center gap-1">
-                      <View className="w-2 h-2 rounded-full bg-brand-success" />
-                      <Text className="text-[10px] text-brand-text-secondary">
-                        {t("transactions.income")}
-                        </Text>
-                      </View>
-
-                    <View className="flex-row items-center gap-1">
-                      <View className="w-2 h-2 rounded-full bg-brand-coral" />
-                      <Text className="text-[10px] text-brand-text-secondary">
-                        {t("transactions.expense")}
-                          </Text>
-                          </View>
-                        </View>
-                    </View>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        <BarChart
-                          data={dailyIncomeExpense}
-                          width={Math.max(dailyIncomeExpense.length * 9, 280)}
-                          height={120}
-                          barWidth={6}
-                          spacing={4}
-                          hideYAxisText
-                          xAxisColor={colors.line}
-                          yAxisColor="transparent"
-                          rulesColor={colors.lineSoft}
-                          noOfSections={3}
-                          xAxisLabelTextStyle={{ color: "#8A8D96", fontSize: 7 }}
-                          isThreeD={false}
-                          roundedTop
-                        />
-                    </ScrollView>
-                  </View>
+              <TransactionChart data={dailyIncomeExpense} />
             ) : null
           }
           ListEmptyComponent={
-            <View className="items-center justify-center py-20">
-              <Feather name="inbox" size={32} color={colors.subtle} />
-              <Text className="text-subtle text-sm mt-3">
-                {search
-                  ? t("transactions.emptySearch")
-                  : rangeActive
-                  ? t("transactions.emptyRange")
-                  : t("transactions.empty")}
-              </Text>
-            </View>
+            <TransactionsEmptyState hasSearch={search.length > 0} rangeActive={rangeActive} />
           }
-          />
-        )}
+        />
+      )}
 
 
       <DateRangeSheet
@@ -632,7 +357,7 @@ export default function TransactionsScreen() {
         onSaved={() => setEditingTx(null)}
       />
 
-        {/* Add trancation FAB - nvaigate to the Add tab */}
+      {/* Add trancation FAB - nvaigate to the Add tab */}
       {/* <TouchableOpacity
         onPress={() => router.push("/(root)/(tabs)/add-transaction")}
         className="absolute right-5 w-14 h-14 rounded-full bg-brand-bg items-center justify-center shadow-lg"
