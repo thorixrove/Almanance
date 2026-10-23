@@ -11,26 +11,35 @@ const FUNCTION_NAME = "extract-transaction";
 async function invokeExtraction(
   supabase: SupabaseClient,
   kind: "receipt" | "voice",
-  data: string,
+  fileUri: string,
   mimeType: string
+
 ): Promise<ExtractedTransaction> {
+  const extension = mimeType.split("/")[1] ?? "bin";
+  const form = new FormData()
+  form.append("kind", kind)
+  form.append("file", {
+    uri: fileUri,
+    name: `${kind}.${extension}`,
+    type: mimeType,
+  } as unknown as Blob)
+
   const { data: result, error } = await supabase.functions.invoke(FUNCTION_NAME, {
-    body: { kind, mimeType, data },
-  });
+    body: form,
+  })
 
   if (error) {
-    // Ambil pesan dari response function bila ada (mis. "Unauthorized").
-    let detail = error.message;
-    const context = (error as { context?: Response }).context;
+    let detail = error.message
+    const context = (error as { context?: Response }).context
     if (context && typeof context.json === "function") {
       try {
-        const body = await context.json();
-        if (body?.error) detail = body.error;
-      } catch {
-        // abaikan, pakai pesan bawaan
+        const body = await context.json()
+        if (body?.error) detail = body.error
+      } catch (error) {
+
       }
     }
-    throw new Error(detail);
+    throw new Error(detail)
   }
 
   if (!result) throw new Error("Empty response from extraction function");

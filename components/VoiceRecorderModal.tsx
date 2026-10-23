@@ -2,14 +2,13 @@ import { extractTransactionFromVoice, ExtractedTransaction } from "@/lib/service
 import { useSupabase } from "@/hooks/useSupabase"
 import { GradientIconButton } from "./GradientIconButton"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
-import { File } from "expo-file-system"
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
   useAudioRecorder,
 } from "expo-audio";
-import {BlurView} from "expo-blur"
+import { BlurView } from "expo-blur"
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -26,54 +25,54 @@ import { AI_GRADIENT, COLORS, RECORDING_GRADIENT } from "@/constants/theme";
 
 type Status = "idle" | "recording" | "processing" | "error"
 
-function PulseRing({ delay, active}: { delay: number; active: boolean}) {
-    const progress = useSharedValue(0)
+function PulseRing({ delay, active }: { delay: number; active: boolean }) {
+  const progress = useSharedValue(0)
 
-useEffect(() => {
+  useEffect(() => {
     if (!active) {
-        progress.value = 0
-        return
+      progress.value = 0
+      return
     }
     progress.value = withRepeat(
-        withSequence(
-            withTiming(0, {duration: 0}),
-            withTiming(1, {duration: 1600, easing: Easing.out(Easing.ease)})
-        ),
-        -1,
-        false
+      withSequence(
+        withTiming(0, { duration: 0 }),
+        withTiming(1, { duration: 1600, easing: Easing.out(Easing.ease) })
+      ),
+      -1,
+      false
     )
-}, [active, progress, delay])
+  }, [active, progress, delay])
 
-const style = useAnimatedStyle(() => ({
+  const style = useAnimatedStyle(() => ({
     opacity: (1 - progress.value) * 0.5,
-    transform: [{ scale: 1 + progress.value * 0.9}],
-}))
+    transform: [{ scale: 1 + progress.value * 0.9 }],
+  }))
 
-return (
+  return (
     <Animated.View
-    style={style}
-    className="absolute w-24 h-24 rounded-full border-2 border-[#0E9C79]"
+      style={style}
+      className="absolute w-24 h-24 rounded-full border-2 border-[#0E9C79]"
     />
-    )
+  )
 }
 
 function ProcessingRing() {
-    const rotation = useSharedValue(0)
+  const rotation = useSharedValue(0)
 
-    useEffect(() => {
-        rotation.value = withRepeat(
-            withTiming(360, { duration: 1100, easing: Easing.linear}),
-            -1,
-            false
-        )
-    }, [rotation])
+  useEffect(() => {
+    rotation.value = withRepeat(
+      withTiming(360, { duration: 1100, easing: Easing.linear }),
+      -1,
+      false
+    )
+  }, [rotation])
 
-    const style = useAnimatedStyle(() => ({
-         transform: [{ rotate: `${rotation.value}deg` }],
-    }))
+  const style = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }))
 
-return(
-        <Animated.View style={style} className="absolute w-24 h-24">
+  return (
+    <Animated.View style={style} className="absolute w-24 h-24">
       <LinearGradient
         colors={[AI_GRADIENT[1], AI_GRADIENT[0], "transparent"]}
         start={{ x: 0, y: 0 }}
@@ -92,113 +91,111 @@ return(
 }
 
 export function VoiceRecorderModal({
-    visible,
-    onClose,
-    onExtracted,
+  visible,
+  onClose,
+  onExtracted,
 }: {
-    visible: boolean
-    onClose: () => void
-    onExtracted: (result: ExtractedTransaction) => void;
+  visible: boolean
+  onClose: () => void
+  onExtracted: (result: ExtractedTransaction) => void;
 }) {
-    const { t } = useTranslation()
-    const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY)
-    // Renamed from "Status" (capital S) to "status" (lowercase) to match
-    // every other usage in this file, and to avoid colliding with the
-    // "Status" type alias defined above.
-    const supabase = useSupabase()
-    const [status, setStatus] = useState<Status>("idle")
-    const [seconds, setSeconds] = useState(0)
+  const { t } = useTranslation()
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY)
+  // Renamed from "Status" (capital S) to "status" (lowercase) to match
+  // every other usage in this file, and to avoid colliding with the
+  // "Status" type alias defined above.
+  const supabase = useSupabase()
+  const [status, setStatus] = useState<Status>("idle")
+  const [seconds, setSeconds] = useState(0)
 
-    const orbScale = useSharedValue(1)
+  const orbScale = useSharedValue(1)
 
-    useEffect(() => {
-        if (!visible) {
-            setStatus("idle")
-            setSeconds(0)
-            // Defensively release any in-progress recording session so the
-            // next time the modal opens, prepareToRecordAsync() doesn't
-            // fail with "already been prepared".
-            recorder.stop().catch(() => {
-                // Nothing to stop, ignore.
-            })
-            return
-        }
-        (async () => {
-            const { granted} = await requestRecordingPermissionsAsync()
-            if (!granted) {
-                setStatus("error")
-                return
-            }
-            await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true})
-        })()
-    }, [visible])
-
-    useEffect(() => {
-        if (status !== "recording") return
-        const interval = setInterval(() => setSeconds((s) => s + 1), 1000)
-        return () => clearInterval(interval)
-    }, [status])
-
-    useEffect(() => {
-        if (status === "recording") {
-            orbScale.value = withRepeat(
-                withSequence(
-                withTiming(1.08, { duration: 500, easing: Easing.inOut(Easing.ease) }),
-                withTiming(1, { duration: 500, easing: Easing.inOut(Easing.ease) })
-                ),
-                -1,
-                false
-            )
-        } else {
-            orbScale.value = withTiming(1, {duration: 200})
-        }
-    }, [status, orbScale])
-
-    const orbStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: orbScale.value}],
-    }))
-
-    const startRecording = async () => {
-        setSeconds(0)
-        try {
-            await recorder.prepareToRecordAsync()
-        } catch (err) {
-            // The recorder can be left in an already-prepared state from a
-            // previous session (e.g. modal reopened without a clean stop).
-            // Defensively stop it and retry once before giving up.
-            console.warn("Recorder was already prepared, resetting:", err)
-            try {
-                await recorder.stop()
-            } catch {
-                // Nothing to stop, ignore.
-            }
-            await recorder.prepareToRecordAsync()
-        }
-        recorder.record()
-        setStatus('recording')
+  useEffect(() => {
+    if (!visible) {
+      setStatus("idle")
+      setSeconds(0)
+      // Defensively release any in-progress recording session so the
+      // next time the modal opens, prepareToRecordAsync() doesn't
+      // fail with "already been prepared".
+      recorder.stop().catch(() => {
+        // Nothing to stop, ignore.
+      })
+      return
     }
+    (async () => {
+      const { granted } = await requestRecordingPermissionsAsync()
+      if (!granted) {
+        setStatus("error")
+        return
+      }
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true })
+    })()
+  }, [visible])
 
-    const stopRecording = async () => {
-        setStatus("processing")
+  useEffect(() => {
+    if (status !== "recording") return
+    const interval = setInterval(() => setSeconds((s) => s + 1), 1000)
+    return () => clearInterval(interval)
+  }, [status])
+
+  useEffect(() => {
+    if (status === "recording") {
+      orbScale.value = withRepeat(
+        withSequence(
+          withTiming(1.08, { duration: 500, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 500, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      )
+    } else {
+      orbScale.value = withTiming(1, { duration: 200 })
+    }
+  }, [status, orbScale])
+
+  const orbStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: orbScale.value }],
+  }))
+
+  const startRecording = async () => {
+    setSeconds(0)
+    try {
+      await recorder.prepareToRecordAsync()
+    } catch (err) {
+      // The recorder can be left in an already-prepared state from a
+      // previous session (e.g. modal reopened without a clean stop).
+      // Defensively stop it and retry once before giving up.
+      console.warn("Recorder was already prepared, resetting:", err)
+      try {
         await recorder.stop()
-
-        try {
-            const uri = recorder.uri
-            if (!uri) throw new Error("No recording captured")
-
-                const file = new File(uri)
-                const base64 = await file.base64()
-                const result = await extractTransactionFromVoice(supabase, base64, "audio/m4a")
-                onExtracted(result)
-                onClose()
-        } catch (error) {
-            console.error('Voice exttractioin failed:', error)
-            setStatus("error")
-        }
+      } catch {
+        // Nothing to stop, ignore.
+      }
+      await recorder.prepareToRecordAsync()
     }
+    recorder.record()
+    setStatus('recording')
+  }
 
-    return(
-          <Modal visible={visible} animationType="slide" transparent>
+  const stopRecording = async () => {
+    setStatus("processing")
+    await recorder.stop()
+
+    try {
+      const uri = recorder.uri
+      if (!uri) throw new Error("No recording captured")
+
+      const result = await extractTransactionFromVoice(supabase, uri, "audio/m4a")
+      onExtracted(result)
+      onClose()
+    } catch (error) {
+      console.error('Voice exttractioin failed:', error)
+      setStatus("error")
+    }
+  }
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
       <View className="flex-1 justify-end">
         <BlurView
           intensity={40}
@@ -252,15 +249,15 @@ export function VoiceRecorderModal({
                 {status === "recording"
                   ? t("voice.listening")
                   : status === "processing"
-                  ? t("voice.understanding")
-                  : t("voice.prompt")}
+                    ? t("voice.understanding")
+                    : t("voice.prompt")}
               </Text>
               <Text className="text-white/50 text-xs mb-8 text-center px-4">
                 {status === "recording"
                   ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
                   : status === "processing"
-                  ? t("voice.transcribing")
-                  : t("voice.example")}
+                    ? t("voice.transcribing")
+                    : t("voice.example")}
               </Text>
 
               <View className="w-24 h-24 items-center justify-center mb-8">
@@ -302,5 +299,5 @@ export function VoiceRecorderModal({
         </LinearGradient>
       </View>
     </Modal>
-    )
+  )
 }

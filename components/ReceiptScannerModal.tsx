@@ -1,7 +1,7 @@
 import { GradientIconButton } from "./GradientIconButton"
 import { AI_GRADIENT, COLORS } from "@/constants/theme"
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons"
-import {CameraView, useCameraPermissions} from "expo-camera"
+import { CameraView, useCameraPermissions } from "expo-camera"
 import * as ImagePicker from "expo-image-picker"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -10,57 +10,55 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 
 export function ReceiptScannerModal({
-    visible,
-    onClose,
-    onCaptured,
-} : {
-    visible: boolean
-    onClose: () => void
-    onCaptured: (base64: string, mimeType: string) => void
+  visible,
+  onClose,
+  onCaptured,
+}: {
+  visible: boolean
+  onClose: () => void
+  onCaptured: (uri: string, mimeType: string) => void
 }) {
-    const { t } = useTranslation()
-    const cameraRef = useRef<CameraView>(null)
-    const [permission, requestPermission] = useCameraPermissions()
-    const [capturing, setCapturing] = useState(false)
+  const { t } = useTranslation()
+  const cameraRef = useRef<CameraView>(null)
+  const [permission, requestPermission] = useCameraPermissions()
+  const [capturing, setCapturing] = useState(false)
 
-    useEffect(() => {
-        if (visible &&  !permission?.granted) requestPermission()
-    }, [visible, permission?.granted, requestPermission ])
+  useEffect(() => {
+    if (visible && !permission?.granted) requestPermission()
+  }, [visible, permission?.granted, requestPermission])
 
-    const handleCaptured = async () => {
-        if (!cameraRef.current || capturing) return
-        setCapturing(true)
-        try {
-            const photo = await cameraRef.current.takePictureAsync({
-                base64: true,
-                quality: 0.6,
-            }) 
-            if (photo?.base64) onCaptured(photo.base64, "image/jpeg");
-        } catch (error) {
-            console.error("Camera capture failed:", error)
-        } finally {
-            setCapturing(false)
-        }
+  const handleCaptured = async () => {
+    if (!cameraRef.current || capturing) return
+    setCapturing(true)
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.6,
+      })
+      if (photo?.uri) onCaptured(photo.uri, "image/jpeg");
+    } catch (error) {
+      console.error("Camera capture failed:", error)
+    } finally {
+      setCapturing(false)
     }
+  }
 
-    const handlePickFromLibrary = async () => {
-        const libraryPermission =
-        await ImagePicker.requestMediaLibraryPermissionsAsync()
-        if (!libraryPermission.granted) return
+  const handlePickFromLibrary = async () => {
+    const libraryPermission =
+      await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (!libraryPermission.granted) return
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ["images"],
-            quality: 0.7,
-            base64: true,
-        })
-        if (result.canceled) return
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.7,
+    })
+    if (result.canceled) return
 
-        const asset = result.assets[0]
-        if (asset.base64) onCaptured(asset.base64, asset.mimeType ?? "image/type")
-    }
+    const asset = result.assets[0]
+    onCaptured(asset.uri, asset.mimeType ?? "image/jpeg")
+  }
 
-    return(
-      <Modal visible={visible} animationType="slide">
+  return (
+    <Modal visible={visible} animationType="slide">
       <View className="flex-1 bg-black">
         {permission?.granted && (
           <CameraView ref={cameraRef} style={{ flex: 1 }} facing="back" />
@@ -134,5 +132,5 @@ export function ReceiptScannerModal({
         )}
       </View>
     </Modal>
-    )
+  )
 }
